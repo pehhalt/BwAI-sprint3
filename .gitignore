@@ -39,7 +39,7 @@ yarn-error.log*
 .vercel
 
 # supabase
-supabase/.temp
+**/supabase/.temp
 
 # typescript
 *.tsbuildinfo
