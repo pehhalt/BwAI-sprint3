@@ -82,6 +82,8 @@ Join table linking notes to tags. One row = one note carrying one tag.
 | `note_id` | `uuid` | not null, FK → `notes.id` on delete cascade |
 | `tag_id` | `uuid` | not null, FK → `tags.id` on delete cascade |
 
+Unique on `(note_id, tag_id)` — a note can't carry the same tag twice.
+
 A note can carry many tags; a tag can apply to many notes.
 See: https://supabase.com/docs/guides/database/joins-and-nesting
 
@@ -103,11 +105,13 @@ begin
 end;
 $$;
 
--- Example policy (same pattern on collections and tags)
+-- Example policy (same pattern on collections and tags). auth.uid() is
+-- wrapped in a select so Postgres caches it once per statement instead
+-- of re-evaluating it for every row.
 create policy "users own their notes"
   on notes for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 -- note_tags: access derived from both the parent note and the tag
 create policy "users own their note_tags"
@@ -116,24 +120,24 @@ create policy "users own their note_tags"
     exists (
       select 1 from notes
       where notes.id = note_tags.note_id
-      and notes.user_id = auth.uid()
+      and notes.user_id = (select auth.uid())
     )
     and exists (
       select 1 from tags
       where tags.id = note_tags.tag_id
-      and tags.user_id = auth.uid()
+      and tags.user_id = (select auth.uid())
     )
   )
   with check ( -- same condition as USING, enforced on insert/update too
     exists (
       select 1 from notes
       where notes.id = note_tags.note_id
-      and notes.user_id = auth.uid()
+      and notes.user_id = (select auth.uid())
     )
     and exists (
       select 1 from tags
       where tags.id = note_tags.tag_id
-      and tags.user_id = auth.uid()
+      and tags.user_id = (select auth.uid())
     )
   );
 ```

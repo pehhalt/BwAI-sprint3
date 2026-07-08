@@ -37,7 +37,8 @@ create table if not exists tags (
 create table if not exists note_tags (
   id uuid primary key default gen_random_uuid(),
   note_id uuid not null references notes(id) on delete cascade,
-  tag_id uuid not null references tags(id) on delete cascade
+  tag_id uuid not null references tags(id) on delete cascade,
+  constraint note_tags_note_id_tag_id_key unique (note_id, tag_id)
 );
 
 -- ── user_id is always set by trigger, never by application code ───────────
@@ -77,20 +78,20 @@ alter table note_tags enable row level security;
 drop policy if exists "users own their collections" on collections;
 create policy "users own their collections"
   on collections for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 drop policy if exists "users own their notes" on notes;
 create policy "users own their notes"
   on notes for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 drop policy if exists "users own their tags" on tags;
 create policy "users own their tags"
   on tags for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 -- note_tags has no user_id column; ownership is derived from the parent
 -- note and tag. USING and WITH CHECK both require owning both sides of the
@@ -102,23 +103,23 @@ create policy "users own their note_tags"
     exists (
       select 1 from notes
       where notes.id = note_tags.note_id
-      and notes.user_id = auth.uid()
+      and notes.user_id = (select auth.uid())
     )
     and exists (
       select 1 from tags
       where tags.id = note_tags.tag_id
-      and tags.user_id = auth.uid()
+      and tags.user_id = (select auth.uid())
     )
   )
   with check (
     exists (
       select 1 from notes
       where notes.id = note_tags.note_id
-      and notes.user_id = auth.uid()
+      and notes.user_id = (select auth.uid())
     )
     and exists (
       select 1 from tags
       where tags.id = note_tags.tag_id
-      and tags.user_id = auth.uid()
+      and tags.user_id = (select auth.uid())
     )
   );
