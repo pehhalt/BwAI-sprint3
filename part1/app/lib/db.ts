@@ -62,6 +62,21 @@ export async function getNotes(supabase: SupabaseClient): Promise<Note[]> {
   return data ?? [];
 }
 
+export async function searchNotes(
+  supabase: SupabaseClient,
+  query: string
+): Promise<Note[]> {
+  assertNonEmpty(query, "Search query");
+  assertLength(query, "Search query", LIMITS.searchQuery);
+  const { data, error } = await supabase
+    .from("notes")
+    .select("*")
+    .textSearch("fts", query, { type: "websearch", config: "english" })
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function createNote(
   supabase: SupabaseClient,
   title: string,

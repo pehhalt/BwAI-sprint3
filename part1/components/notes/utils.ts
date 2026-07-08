@@ -12,19 +12,16 @@ export function filterNotes(
   opts: {
     noteTags: Record<string, Tag[]>;
     activeTagIds: Set<string>;
-    searchQuery: string;
+    searchResults: Note[] | null;
   }
 ): Note[] {
-  const query = opts.searchQuery.trim().toLowerCase();
   return notes.filter((note) => {
     if (opts.activeTagIds.size > 0) {
       const ids = new Set((opts.noteTags[note.id] ?? []).map((t) => t.id));
       if (![...opts.activeTagIds].every((id) => ids.has(id))) return false;
     }
-    if (query) {
-      const inTitle = note.title.toLowerCase().includes(query);
-      const inBody = (note.body ?? "").toLowerCase().includes(query);
-      if (!inTitle && !inBody) return false;
+    if (opts.searchResults !== null) {
+      return opts.searchResults.some((r) => r.id === note.id);
     }
     return true;
   });
