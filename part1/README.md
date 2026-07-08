@@ -111,13 +111,14 @@ Both methods are equally secure and work with the same account data.
 
 ### Project subagents
 
-`.claude/agents/` defines four project-scoped subagents used to review this
-codebase:
+`sprint3/.claude/agents/` (one level up from this `part1/` folder, so
+`part2/` and any future sprint parts can reuse them without duplication)
+defines four project-scoped subagents used to review this codebase:
 
 - **ai-architect** — structural review; flags weak design choices before new features are added
 - **ai-code-reviewer** — reviews a diff/commit range for dead code, duplication, and hidden behavior changes
 - **ai-researcher** — read-only exploration and web research; returns a briefing, not a plan
-- **security-auditor** — Supabase-specific security audit (RLS gaps, exposed keys, risky configs); loads the `supabase-security` project skill (`.claude/skills/supabase-security/SKILL.md`) as its reference
+- **security-auditor** — Supabase-specific security audit (RLS gaps, exposed keys, risky configs); loads the `supabase-security` project skill (`sprint3/.claude/skills/supabase-security/SKILL.md`) as its reference
 
 See `docs/notes-workspace-refactor.md` for how the first three were used to
 audit and split `notes-workspace.tsx`, and `docs/supabase-security-audit.md`
