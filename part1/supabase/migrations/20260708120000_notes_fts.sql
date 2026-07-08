@@ -5,4 +5,4 @@ ALTER TABLE notes
     to_tsvector('english', coalesce(title, '') || ' ' || coalesce(body, ''))
   ) STORED;
 
-CREATE INDEX IF NOT EXISTS notes_fts_idx ON notes USING gin (fts);
+CREATE INDEX IF NOT EXISTS notes_fts_gin ON notes USING gin (fts);
