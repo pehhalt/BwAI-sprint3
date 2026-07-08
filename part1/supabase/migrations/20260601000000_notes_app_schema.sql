@@ -28,9 +28,10 @@ create table if not exists notes (
 
 create table if not exists tags (
   id uuid primary key default gen_random_uuid(),
-  name text not null unique,
+  name text not null,
   user_id uuid not null references auth.users(id) on delete cascade,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  constraint tags_user_id_name_key unique (user_id, name)
 );
 
 create table if not exists note_tags (
@@ -92,9 +93,8 @@ create policy "users own their tags"
   with check (auth.uid() = user_id);
 
 -- note_tags has no user_id column; ownership is derived from the parent
--- note and tag. WITH CHECK is explicit (rather than relying on Postgres
--- reusing USING) and also verifies the tag belongs to the caller, so a
--- note can't be tagged with another user's tag_id.
+-- note and tag. USING and WITH CHECK both require owning both sides of the
+-- link, so a note can't be read/linked/unlinked using another user's tag_id.
 drop policy if exists "users own their note_tags" on note_tags;
 create policy "users own their note_tags"
   on note_tags for all
@@ -103,6 +103,11 @@ create policy "users own their note_tags"
       select 1 from notes
       where notes.id = note_tags.note_id
       and notes.user_id = auth.uid()
+    )
+    and exists (
+      select 1 from tags
+      where tags.id = note_tags.tag_id
+      and tags.user_id = auth.uid()
     )
   )
   with check (
