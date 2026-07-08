@@ -61,7 +61,7 @@ Create these tables in Supabase before writing app code.
 | Column | Type | Notes |
 |--------|------|-------|
 | `id` | `uuid` | primary key, default `gen_random_uuid()` |
-| `name` | `text` | not null, unique |
+| `name` | `text` | not null; unique per `(user_id, name)` — not globally unique, since tags are scoped per user |
 | `created_at` | `timestamptz` | default `now()` |
 
 ### `note_tags` (join table)
