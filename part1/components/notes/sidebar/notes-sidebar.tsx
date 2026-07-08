@@ -8,7 +8,6 @@ export function NotesSidebar({
   onNewNote,
   searchQuery,
   onSearchChange,
-  searching,
   tags,
   activeTagIds,
   onToggleTagFilter,
@@ -38,7 +37,6 @@ export function NotesSidebar({
   onNewNote: () => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  searching: boolean;
   tags: Tag[];
   activeTagIds: Set<string>;
   onToggleTagFilter: (tagId: string) => void;
@@ -85,9 +83,7 @@ export function NotesSidebar({
           <div className="relative">
             <SearchIcon
               size={13}
-              className={`absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${
-                searching ? "text-primary animate-pulse" : "text-muted-foreground"
-              }`}
+              className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground"
             />
             <input
               value={searchQuery}

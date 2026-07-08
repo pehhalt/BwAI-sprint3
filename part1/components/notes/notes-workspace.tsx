@@ -35,14 +35,14 @@ export default function NotesWorkspace({
     notesState.selectedId,
     setError
   );
-  const searchState = useSearch(supabase, setError);
+  const searchState = useSearch();
 
-  const isFiltering = tagsState.activeTagIds.size > 0 || searchState.searchResults !== null;
+  const isFiltering = tagsState.activeTagIds.size > 0 || searchState.searchQuery.trim().length > 0;
 
   const filtered = filterNotes(notesState.notes, {
     noteTags: tagsState.noteTags,
     activeTagIds: tagsState.activeTagIds,
-    searchResults: searchState.searchResults,
+    searchQuery: searchState.searchQuery,
   });
 
   const uncollectedNotes = filtered.filter((n) => !n.collection_id);
@@ -96,8 +96,7 @@ export default function NotesWorkspace({
         <NotesSidebar
           onNewNote={newNote}
           searchQuery={searchState.searchQuery}
-          onSearchChange={searchState.handleSearchChange}
-          searching={searchState.searching}
+          onSearchChange={searchState.setSearchQuery}
           tags={tagsState.tags}
           activeTagIds={tagsState.activeTagIds}
           onToggleTagFilter={tagsState.toggleTagFilter}

@@ -1,6 +1,13 @@
 import { useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createTag, addTagToNote, removeTagFromNote, type Tag } from "@/app/lib/db";
+import {
+  createTag,
+  findTagByName,
+  addTagToNote,
+  removeTagFromNote,
+  isUniqueViolation,
+  type Tag,
+} from "@/app/lib/db";
 
 export function useTags(
   supabase: SupabaseClient,
@@ -55,7 +62,16 @@ export function useTags(
     try {
       let tag = tags.find((t) => t.name.toLowerCase() === name.toLowerCase());
       if (!tag) {
-        tag = await createTag(supabase, name);
+        try {
+          tag = await createTag(supabase, name);
+        } catch (e) {
+          // Another request created the same tag first (unique_violation on
+          // tags.name) — look it up and use it instead of failing.
+          if (!isUniqueViolation(e)) throw e;
+          const existing = await findTagByName(supabase, name);
+          if (!existing) throw e;
+          tag = existing;
+        }
         setTags((prev) => [...prev, tag!].sort((a, b) => a.name.localeCompare(b.name)));
       }
 

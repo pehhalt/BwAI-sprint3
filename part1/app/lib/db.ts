@@ -39,27 +39,24 @@ function assertNonEmpty(value: string, field: string) {
   if (!value.trim()) throw new Error(`${field} must not be empty.`);
 }
 
+// Postgres unique_violation. Used to detect a find-or-create race on tag
+// names (two concurrent inserts for the same tag) so the caller can recover
+// by looking up the tag the other request just created, instead of failing.
+export function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code: unknown }).code === "23505"
+  );
+}
+
 // ── Notes ─────────────────────────────────────────────────────────────────────
 
 export async function getNotes(supabase: SupabaseClient): Promise<Note[]> {
   const { data, error } = await supabase
     .from("notes")
     .select("*")
-    .order("updated_at", { ascending: false });
-  if (error) throw error;
-  return data ?? [];
-}
-
-export async function searchNotes(
-  supabase: SupabaseClient,
-  query: string
-): Promise<Note[]> {
-  assertNonEmpty(query, "Search query");
-  assertLength(query, "Search query", LIMITS.searchQuery);
-  const { data, error } = await supabase
-    .from("notes")
-    .select("*")
-    .textSearch("fts", query, { type: "websearch", config: "english" })
     .order("updated_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
@@ -97,7 +94,7 @@ export async function updateNote(
     .eq("id", id)
     .select()
     .single();
-  if (error) throw new Error("Failed to update note.");
+  if (error) throw error;
   return data;
 }
 
@@ -197,6 +194,19 @@ export async function createTag(
     .insert({ name: name.trim() })
     .select()
     .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function findTagByName(
+  supabase: SupabaseClient,
+  name: string
+): Promise<Tag | null> {
+  const { data, error } = await supabase
+    .from("tags")
+    .select("*")
+    .eq("name", name.trim())
+    .maybeSingle();
   if (error) throw error;
   return data;
 }
