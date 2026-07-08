@@ -42,7 +42,9 @@ create table if not exists note_tags (
 -- ── user_id is always set by trigger, never by application code ───────────
 
 create or replace function set_user_id()
-returns trigger language plpgsql security definer as $$
+returns trigger language plpgsql security definer
+set search_path = ''
+as $$
 begin
   new.user_id = auth.uid();
   return new;
@@ -89,7 +91,10 @@ create policy "users own their tags"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
--- note_tags has no user_id column; ownership is derived from the parent note.
+-- note_tags has no user_id column; ownership is derived from the parent
+-- note and tag. WITH CHECK is explicit (rather than relying on Postgres
+-- reusing USING) and also verifies the tag belongs to the caller, so a
+-- note can't be tagged with another user's tag_id.
 drop policy if exists "users own their note_tags" on note_tags;
 create policy "users own their note_tags"
   on note_tags for all
@@ -98,5 +103,17 @@ create policy "users own their note_tags"
       select 1 from notes
       where notes.id = note_tags.note_id
       and notes.user_id = auth.uid()
+    )
+  )
+  with check (
+    exists (
+      select 1 from notes
+      where notes.id = note_tags.note_id
+      and notes.user_id = auth.uid()
+    )
+    and exists (
+      select 1 from tags
+      where tags.id = note_tags.tag_id
+      and tags.user_id = auth.uid()
     )
   );
