@@ -13,12 +13,12 @@ A secure, cloud-based notes application built with Next.js and Supabase. Create,
 
 1. **Clone and install dependencies:**
    ```bash
-   cd part4
+   cd sprint3/part1
    npm install
    ```
 
 2. **Configure Supabase:**
-   - Create a `.env.local` file in the `part4/` directory
+   - Create a `.env.local` file in the `part1/` directory
    - Add your Supabase credentials:
      ```
      NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
@@ -60,13 +60,15 @@ Both methods are equally secure and work with the same account data.
 - **Create notes** — Click "New note" to start writing
 - **Edit anytime** — Notes save automatically as you type
 - **Rich text** — Add titles and body content
-- **Search** — Find notes by title or content in real time
+- **Search** — Server-side full-text search across title and body, powered by a Postgres `tsvector` column with a GIN index; results narrow in real time as you type
+- **Export** — Download any note as a Markdown file
 
 ### Collections
 
 - **Organize** — Group related notes into collections
 - **Create collections** — Use the sidebar to add new collections
-- **Move notes** — Assign notes to a collection via dropdown
+- **Rename collections** — Click the pencil icon next to a collection name in the sidebar; saves on Enter or blur
+- **Move notes** — Assign notes to a collection via the dropdown in the note toolbar, or right-click a note card in the sidebar for a "Move to" context menu
 
 ### Tags
 
@@ -104,6 +106,22 @@ Both methods are equally secure and work with the same account data.
 
 - Hard refresh your browser (`Ctrl+Shift+F5` or `Cmd+Shift+R`)
 - Browser caches can show stale data when switching accounts
+
+## Development
+
+### Project subagents
+
+`.claude/agents/` defines four project-scoped subagents used to review this
+codebase (see `docs/notes-workspace-refactor.md` for how they were used):
+
+- **ai-architect** — structural review; flags weak design choices before new features are added
+- **ai-code-reviewer** — reviews a diff/commit range for dead code, duplication, and hidden behavior changes
+- **ai-researcher** — read-only exploration and web research; returns a briefing, not a plan
+- **security-auditor** — Supabase-specific security audit (RLS gaps, exposed keys, risky configs); loads the `supabase-security` project skill (`.claude/skills/supabase-security/SKILL.md`) as its reference
+
+### Optional-task branches
+
+Per this project's workflow, optional tasks are built on a dedicated branch and merged via PR rather than committed straight to `main`. `feat/fts` (server-side full-text search) was completed this way.
 
 ## Support
 
