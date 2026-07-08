@@ -1,11 +1,13 @@
 -- Hardening from the security-auditor's second review, ahead of the
 -- Sprint 3 Part 2 Vercel deploy:
 --
--- 1. tags.name was globally unique across all users. RLS hid other users'
---    tags from view, but the UNIQUE constraint still applied database-wide
---    regardless of RLS — a user could infer whether some other user already
---    had a given tag name (unique_violation vs. success), and two different
---    users could never share a tag name like "work". Scoped to per-user.
+-- 1. tags.name was assumed to be globally unique per docs/supabase-schema.md,
+--    but checking the live database found no such constraint (or any unique
+--    index/constraint on the column) actually existed — only the primary
+--    key, the user_id foreign key, and the two NOT NULL checks. So this
+--    isn't dropping a legacy constraint; it's adding per-user uniqueness
+--    for the first time. Verified no existing (user_id, name) duplicates
+--    before adding it.
 -- 2. note_tags' USING clause only checked note ownership, leaving tag
 --    ownership checked only in WITH CHECK (the insert/update path).
 --    Tightened so reads/deletes also require owning both sides of the link.
@@ -14,26 +16,7 @@
 -- `supabase db reset` creates the correct schema from the start; this
 -- migration is what actually alters the already-live database.
 
--- ── tags.name: unique per user, not globally ────────────────────────────
-
-do $$
-declare
-  legacy_constraint text;
-begin
-  select con.conname into legacy_constraint
-  from pg_constraint con
-  join pg_class rel on rel.oid = con.conrelid
-  join pg_attribute att
-    on att.attrelid = con.conrelid and att.attnum = any(con.conkey)
-  where rel.relname = 'tags'
-    and con.contype = 'u'
-    and att.attname = 'name'
-    and cardinality(con.conkey) = 1;
-
-  if legacy_constraint is not null then
-    execute format('alter table tags drop constraint %I', legacy_constraint);
-  end if;
-end $$;
+-- ── tags.name: unique per user ──────────────────────────────────────────
 
 do $$
 begin

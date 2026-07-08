@@ -66,7 +66,7 @@ Stores tag names. Tags are shared across notes via the `note_tags` join table.
 | Column | Type | Constraints | Default |
 |--------|------|-------------|---------|
 | `id` | `uuid` | primary key | `gen_random_uuid()` |
-| `name` | `text` | not null, unique | — |
+| `name` | `text` | not null; unique per `(user_id, name)` | — |
 | `user_id` | `uuid` | not null, FK → `auth.users.id` on delete cascade | set by trigger |
 | `created_at` | `timestamptz` | not null | `now()` |
 
@@ -109,7 +109,7 @@ create policy "users own their notes"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
--- note_tags: access derived from note ownership
+-- note_tags: access derived from both the parent note and the tag
 create policy "users own their note_tags"
   on note_tags for all
   using (
@@ -117,6 +117,23 @@ create policy "users own their note_tags"
       select 1 from notes
       where notes.id = note_tags.note_id
       and notes.user_id = auth.uid()
+    )
+    and exists (
+      select 1 from tags
+      where tags.id = note_tags.tag_id
+      and tags.user_id = auth.uid()
+    )
+  )
+  with check ( -- same condition as USING, enforced on insert/update too
+    exists (
+      select 1 from notes
+      where notes.id = note_tags.note_id
+      and notes.user_id = auth.uid()
+    )
+    and exists (
+      select 1 from tags
+      where tags.id = note_tags.tag_id
+      and tags.user_id = auth.uid()
     )
   );
 ```
