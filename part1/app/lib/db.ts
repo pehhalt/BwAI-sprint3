@@ -218,11 +218,13 @@ export async function createCollection(name: string): Promise<Collection> {
 }
 
 export async function renameCollection(id: string, name: string): Promise<Collection> {
+  assertNonEmpty(name, "Collection name");
+  assertLength(name, "Collection name", LIMITS.collectionName);
   const supabase = await createClient();
   const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from("collections")
-    .update({ name })
+    .update({ name: name.trim() })
     .eq("id", id)
     .eq("user_id", userId)
     .select(COLLECTION_COLUMNS)
@@ -246,21 +248,31 @@ export async function getTags(): Promise<Tag[]> {
 }
 
 // Returns a flat list of { note_id, tag } rows for all of the caller's notes.
-// Uses two separate queries instead of a join to avoid RLS filtering
-// silently nulling out joined rows.
+// Uses separate queries instead of a join to avoid RLS filtering silently
+// nulling out joined rows. note_tags has no user_id column, so it's scoped
+// here to the caller's own note ids first (mirroring the note_tags RLS
+// policy) rather than relying on RLS alone.
 export async function getNoteTags(): Promise<{ note_id: string; tag: Tag }[]> {
   const supabase = await createClient();
   const userId = await getCurrentUserId();
-  const [noteTagsRes, tagsRes] = await Promise.all([
-    supabase.from("note_tags").select("note_id, tag_id"),
+  const [notesRes, tagsRes] = await Promise.all([
+    supabase.from("notes").select("id").eq("user_id", userId),
     supabase.from("tags").select(TAG_COLUMNS).eq("user_id", userId),
   ]);
-  if (noteTagsRes.error) throw noteTagsRes.error;
+  if (notesRes.error) throw notesRes.error;
   if (tagsRes.error) throw tagsRes.error;
 
+  const noteIds = (notesRes.data ?? []).map((n) => n.id);
   const tagsById = new Map((tagsRes.data ?? []).map((t) => [t.id, t as Tag]));
+  if (noteIds.length === 0) return [];
 
-  return (noteTagsRes.data ?? [])
+  const { data: noteTags, error: noteTagsError } = await supabase
+    .from("note_tags")
+    .select("note_id, tag_id")
+    .in("note_id", noteIds);
+  if (noteTagsError) throw noteTagsError;
+
+  return (noteTags ?? [])
     .map((row) => {
       const tag = tagsById.get(row.tag_id);
       return tag ? { note_id: row.note_id, tag } : null;

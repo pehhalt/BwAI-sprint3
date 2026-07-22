@@ -7,9 +7,20 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
-  // If the env vars are not set, skip proxy check. You can remove this
-  // once you setup the project.
+  // If the env vars are not set, we can't create a Supabase client to check
+  // auth — fail closed rather than open. Still allow "/" and "/auth/**" to
+  // render (matching the gate below) so the app remains reachable before
+  // it's configured, but anything else redirects to login instead of
+  // rendering unauthenticated.
   if (!hasEnvVars) {
+    if (
+      request.nextUrl.pathname !== "/" &&
+      !request.nextUrl.pathname.startsWith("/auth")
+    ) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/auth/login";
+      return NextResponse.redirect(url);
+    }
     return supabaseResponse;
   }
 

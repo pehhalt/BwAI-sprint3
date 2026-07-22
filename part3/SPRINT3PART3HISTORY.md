@@ -242,7 +242,49 @@ work only.
       skips its full audit if nothing deployment-relevant changed),
       same merge/dedupe behavior. Day-to-day/PR use;
       `/security-scan` reserved for periodic full-codebase runs
-- [ ] Not yet run/tested this session — needs `/reload-plugins` first
+- [x] `/reload-plugins`, then ran `/security-scan` against `part1/` for
+      real — all 3 scanners dispatched in parallel, correctly merged into
+      one severity-grouped report: **0 critical, 1 high, 3 medium, 4 low**
+      across the whole app + deployment. Confirms the Server Actions
+      migration and the security-headers fix both hold up under a fresh
+      full rescan — no regressions.
+      - High: `getNoteTags()` in `app/lib/db.ts` queried `note_tags` with
+        no explicit user scoping, contradicting the file's own
+        defense-in-depth comment — relied entirely on RLS
+      - Medium ×3: `renameCollection()` skipped the input validation every
+        other DAL write applies; `lib/supabase/proxy.ts` failed **open**
+        (skipped the entire login-redirect gate) if Supabase env vars were
+        ever missing; no rate limiting anywhere (mutations, password
+        reset)
+      - Low ×4: RLS policies missing `TO authenticated` clause (Supabase,
+        not currently exploitable — no anon sign-ins enabled); Vercel env
+        vars marked "Encrypted" not "Sensitive" (low-risk, they're public
+        anon keys anyway); `lib/supabase/server.ts` missing an explicit
+        `server-only` marker; `cacheComponents: true` is a standing
+        footgun for a future Server Component that forgets `connection()`
+- [x] Fixed the High + 2 of the 3 Mediums directly in code:
+      - `getNoteTags()` now scopes to the caller's own note ids first
+        (fetches `notes.id` for `user_id`, then filters `note_tags` via
+        `.in("note_id", noteIds)`) instead of reading the whole table —
+        explicit code-level scoping again, not just RLS
+      - `renameCollection()` now runs the same `assertNonEmpty`/
+        `assertLength` checks `createCollection` already had
+      - `lib/supabase/proxy.ts`'s missing-env-vars branch now mirrors the
+        real auth gate (redirect anything outside `/` and `/auth/**` to
+        `/auth/login`) instead of skipping the check entirely — fails
+        closed instead of open
+      - Verified: `tsc --noEmit`, `eslint` on both changed files, and
+        `next build` all clean; the 2 pre-existing lint errors in
+        unrelated files (`theme-switcher.tsx`, `collection-header.tsx`)
+        predate this change
+- [ ] Third Medium (no rate limiting) deliberately **not** fixed in code —
+      asked which approach to take (Vercel Firewall dashboard rule vs.
+      Upstash Redis vs. in-memory-only limiter vs. skip); chose the
+      **Vercel Firewall dashboard rule**, since it needs no new dependency
+      or infra and this project already had "add a Vercel Firewall
+      rate-limit rule" as an open post-deploy TODO below. Dashboard-only —
+      requires manual setup in the Vercel UI (may need the Pro plan; not
+      confirmed for this team). Not done yet this session.
 
 ## Vercel deployment-gating + defence-in-depth (post-deploy, if deployed)
 
