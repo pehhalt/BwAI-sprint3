@@ -33,9 +33,11 @@ the repo root.
       `.agents/skills/supabase-postgres-best-practices`, symlinked into
       `.claude/skills/` (Claude Code's actual discovery path)
 - [x] `/reload-plugins` + `/skills` — both skills now show as loadable
-- [ ] Optional cleanup: `part1/.agents/skills/{supabase,supabase-postgres-best-practices}`
-      is now an orphaned duplicate of the old, non-discoverable install
-      — safe to delete later, not touched yet
+- [x] Optional cleanup: `part1/.agents/skills/{supabase,supabase-postgres-best-practices}`
+      was an orphaned duplicate of the old, non-discoverable install —
+      removed via `git rm -r` (40 tracked files); the real, discoverable
+      copy remains at the repo root's `.agents/skills/`, symlinked into
+      `.claude/skills/`
 
 ### Step 3 — Build `supabase-security-scanner`
 
@@ -335,9 +337,9 @@ work only.
   protection against a malicious client), which is exactly the
   fresh-context-catches-things-a-carried-context-would-rationalize-away
   behavior this lesson warns about.
-- `part1/.agents/skills/{supabase,supabase-postgres-best-practices}` is
-  still an orphaned duplicate from the original (non-discoverable)
-  install — not cleaned up this session, safe to remove later.
+- `part1/.agents/skills/{supabase,supabase-postgres-best-practices}`, the
+  orphaned duplicate from the original (non-discoverable) install, was
+  removed via `git rm -r`.
 - On Windows with `core.symlinks=false`, `git add` on the
   `.claude/skills/supabase*` symlinks (created by `npx skills add`)
   dereferenced them into full duplicate copies instead of storing a
