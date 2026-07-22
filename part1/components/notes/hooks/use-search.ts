@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { searchNotes, type Note } from "@/app/lib/db";
+import { searchNotesAction } from "@/app/actions/notes";
+import type { Note } from "@/app/lib/db";
 
-export function useSearch(supabase: SupabaseClient, onError: (msg: string) => void) {
+export function useSearch(onError: (msg: string) => void) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Note[] | null>(null);
   const [searching, setSearching] = useState(false);
@@ -19,7 +19,7 @@ export function useSearch(supabase: SupabaseClient, onError: (msg: string) => vo
     setSearching(true);
     searchTimerRef.current = setTimeout(async () => {
       try {
-        const results = await searchNotes(supabase, query.trim());
+        const results = await searchNotesAction(query.trim());
         setSearchResults(results);
       } catch {
         onError("Search failed.");

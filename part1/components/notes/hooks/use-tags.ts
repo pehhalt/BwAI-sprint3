@@ -1,16 +1,11 @@
 import { useState } from "react";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  createTag,
-  findTagByName,
-  addTagToNote,
-  removeTagFromNote,
-  isUniqueViolation,
-  type Tag,
-} from "@/app/lib/db";
+  addTagToNoteByNameAction,
+  removeTagFromNoteAction,
+} from "@/app/actions/tags";
+import type { Tag } from "@/app/lib/db";
 
 export function useTags(
-  supabase: SupabaseClient,
   initialTags: Tag[],
   initialNoteTags: Record<string, Tag[]>,
   selectedId: string | null,
@@ -60,25 +55,15 @@ export function useTags(
       return;
 
     try {
-      let tag = tags.find((t) => t.name.toLowerCase() === name.toLowerCase());
-      if (!tag) {
-        try {
-          tag = await createTag(supabase, name);
-        } catch (e) {
-          // Another request created the same tag first (unique_violation on
-          // tags.name) — look it up and use it instead of failing.
-          if (!isUniqueViolation(e)) throw e;
-          const existing = await findTagByName(supabase, name);
-          if (!existing) throw e;
-          tag = existing;
-        }
-        setTags((prev) => [...prev, tag!].sort((a, b) => a.name.localeCompare(b.name)));
-      }
-
-      await addTagToNote(supabase, selectedId, tag.id);
+      const tag = await addTagToNoteByNameAction(selectedId, name);
+      setTags((prev) =>
+        prev.some((t) => t.id === tag.id)
+          ? prev
+          : [...prev, tag].sort((a, b) => a.name.localeCompare(b.name))
+      );
       setNoteTags((prev) => ({
         ...prev,
-        [selectedId]: [...(prev[selectedId] ?? []), tag!],
+        [selectedId]: [...(prev[selectedId] ?? []), tag],
       }));
       setTagInput("");
       setTagDropdownOpen(false);
@@ -90,7 +75,7 @@ export function useTags(
   async function handleRemoveTag(tagId: string) {
     if (!selectedId) return;
     try {
-      await removeTagFromNote(supabase, selectedId, tagId);
+      await removeTagFromNoteAction(selectedId, tagId);
       setNoteTags((prev) => ({
         ...prev,
         [selectedId]: (prev[selectedId] ?? []).filter((t) => t.id !== tagId),

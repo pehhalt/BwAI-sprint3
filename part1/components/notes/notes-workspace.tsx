@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import type { Note, Collection, Tag } from "@/app/lib/db";
 import { useNotes } from "@/components/notes/hooks/use-notes";
 import { useCollections } from "@/components/notes/hooks/use-collections";
@@ -23,19 +22,17 @@ export default function NotesWorkspace({
   initialTags: Tag[];
   initialNoteTags: Record<string, Tag[]>;
 }) {
-  const supabase = createClient();
   const [error, setError] = useState<string | null>(null);
 
-  const notesState = useNotes(supabase, initialNotes, setError);
-  const collectionsState = useCollections(supabase, initialCollections, setError);
+  const notesState = useNotes(initialNotes, setError);
+  const collectionsState = useCollections(initialCollections, setError);
   const tagsState = useTags(
-    supabase,
     initialTags,
     initialNoteTags,
     notesState.selectedId,
     setError
   );
-  const searchState = useSearch(supabase, setError);
+  const searchState = useSearch(setError);
 
   const isFiltering = tagsState.activeTagIds.size > 0 || searchState.searchResults !== null;
 
