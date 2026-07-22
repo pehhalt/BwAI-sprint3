@@ -69,7 +69,8 @@ export function isUniqueViolation(error: unknown): boolean {
 // Postgres RLS: a future RLS regression (a dropped policy, a migration
 // mistake, a privileged query added elsewhere) would still be caught here.
 
-const getCurrentUserId = cache(async (supabase: SupabaseClient): Promise<string> => {
+const getCurrentUserId = cache(async (): Promise<string> => {
+  const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) throw new Error("Not authenticated.");
   return data.user.id;
@@ -110,7 +111,7 @@ async function assertOwnsNoteAndTag(
 
 export async function getNotes(): Promise<Note[]> {
   const supabase = await createClient();
-  const userId = await getCurrentUserId(supabase);
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from("notes")
     .select(NOTE_COLUMNS)
@@ -124,7 +125,7 @@ export async function searchNotes(query: string): Promise<Note[]> {
   assertNonEmpty(query, "Search query");
   assertLength(query, "Search query", LIMITS.searchQuery);
   const supabase = await createClient();
-  const userId = await getCurrentUserId(supabase);
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from("notes")
     .select(NOTE_COLUMNS)
@@ -143,7 +144,7 @@ export async function createNote(
   assertLength(title, "Title", LIMITS.noteTitle);
   assertLength(body, "Body", LIMITS.noteBody);
   const supabase = await createClient();
-  const userId = await getCurrentUserId(supabase);
+  const userId = await getCurrentUserId();
   if (collection_id) await assertOwnsCollection(supabase, userId, collection_id);
   const { data, error } = await supabase
     .from("notes")
@@ -163,7 +164,7 @@ export async function updateNote(
   if (fields.body !== undefined)
     assertLength(fields.body, "Body", LIMITS.noteBody);
   const supabase = await createClient();
-  const userId = await getCurrentUserId(supabase);
+  const userId = await getCurrentUserId();
   if (fields.collection_id)
     await assertOwnsCollection(supabase, userId, fields.collection_id);
   const { data, error } = await supabase
@@ -179,7 +180,7 @@ export async function updateNote(
 
 export async function deleteNote(id: string): Promise<void> {
   const supabase = await createClient();
-  const userId = await getCurrentUserId(supabase);
+  const userId = await getCurrentUserId();
   const { error } = await supabase
     .from("notes")
     .delete()
@@ -192,7 +193,7 @@ export async function deleteNote(id: string): Promise<void> {
 
 export async function getCollections(): Promise<Collection[]> {
   const supabase = await createClient();
-  const userId = await getCurrentUserId(supabase);
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from("collections")
     .select(COLLECTION_COLUMNS)
@@ -206,7 +207,7 @@ export async function createCollection(name: string): Promise<Collection> {
   assertNonEmpty(name, "Collection name");
   assertLength(name, "Collection name", LIMITS.collectionName);
   const supabase = await createClient();
-  await getCurrentUserId(supabase);
+  await getCurrentUserId();
   const { data, error } = await supabase
     .from("collections")
     .insert({ name: name.trim() })
@@ -218,7 +219,7 @@ export async function createCollection(name: string): Promise<Collection> {
 
 export async function renameCollection(id: string, name: string): Promise<Collection> {
   const supabase = await createClient();
-  const userId = await getCurrentUserId(supabase);
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from("collections")
     .update({ name })
@@ -234,7 +235,7 @@ export async function renameCollection(id: string, name: string): Promise<Collec
 
 export async function getTags(): Promise<Tag[]> {
   const supabase = await createClient();
-  const userId = await getCurrentUserId(supabase);
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from("tags")
     .select(TAG_COLUMNS)
@@ -249,7 +250,7 @@ export async function getTags(): Promise<Tag[]> {
 // silently nulling out joined rows.
 export async function getNoteTags(): Promise<{ note_id: string; tag: Tag }[]> {
   const supabase = await createClient();
-  const userId = await getCurrentUserId(supabase);
+  const userId = await getCurrentUserId();
   const [noteTagsRes, tagsRes] = await Promise.all([
     supabase.from("note_tags").select("note_id, tag_id"),
     supabase.from("tags").select(TAG_COLUMNS).eq("user_id", userId),
@@ -271,7 +272,7 @@ export async function createTag(name: string): Promise<Tag> {
   assertNonEmpty(name, "Tag name");
   assertLength(name, "Tag name", LIMITS.tagName);
   const supabase = await createClient();
-  await getCurrentUserId(supabase);
+  await getCurrentUserId();
   const { data, error } = await supabase
     .from("tags")
     .insert({ name: name.trim() })
@@ -283,7 +284,7 @@ export async function createTag(name: string): Promise<Tag> {
 
 export async function findTagByName(name: string): Promise<Tag | null> {
   const supabase = await createClient();
-  const userId = await getCurrentUserId(supabase);
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from("tags")
     .select(TAG_COLUMNS)
@@ -296,7 +297,7 @@ export async function findTagByName(name: string): Promise<Tag | null> {
 
 export async function addTagToNote(noteId: string, tagId: string): Promise<void> {
   const supabase = await createClient();
-  const userId = await getCurrentUserId(supabase);
+  const userId = await getCurrentUserId();
   await assertOwnsNoteAndTag(supabase, userId, noteId, tagId);
   const { error } = await supabase
     .from("note_tags")
@@ -326,7 +327,7 @@ export async function addTagToNoteByName(noteId: string, name: string): Promise<
 
 export async function removeTagFromNote(noteId: string, tagId: string): Promise<void> {
   const supabase = await createClient();
-  const userId = await getCurrentUserId(supabase);
+  const userId = await getCurrentUserId();
   await assertOwnsNoteAndTag(supabase, userId, noteId, tagId);
   const { error } = await supabase
     .from("note_tags")
