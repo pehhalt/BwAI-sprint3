@@ -215,6 +215,9 @@ implementer + reviewer subagent):
       confirmed live via `curl` against production
 - [ ] 2 Low findings left open (no `vercel.json`; env hygiene already
       confirmed clean, not a defect) — not fixed, low priority
+- [x] Human smoke-tested the live site after the headers fix (Google
+      sign-in specifically, since CSP can silently break runtime JS in
+      ways `curl` can't catch) — confirmed working
 
 ### Step 9 — Wrap up
 
