@@ -20,6 +20,10 @@ export type Tag = {
   name: string;
 };
 
+const NOTE_COLUMNS = "id, title, body, created_at, updated_at, collection_id";
+const COLLECTION_COLUMNS = "id, name, created_at";
+const TAG_COLUMNS = "id, name";
+
 // ── Validation ────────────────────────────────────────────────────────────────
 
 const LIMITS = {
@@ -51,12 +55,59 @@ export function isUniqueViolation(error: unknown): boolean {
   );
 }
 
+// ── Authorization ─────────────────────────────────────────────────────────────
+//
+// RLS is the enforced boundary, but every mutation here also scopes its query
+// to the caller's own user_id explicitly. This is defense-in-depth: a future
+// RLS regression (a dropped policy, a migration mistake, a privileged query
+// added elsewhere) shouldn't silently turn into cross-user read/write with no
+// second line of defense in application code.
+
+async function requireUserId(supabase: SupabaseClient): Promise<string> {
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) throw new Error("Not authenticated.");
+  return data.user.id;
+}
+
+async function assertOwnsCollection(
+  supabase: SupabaseClient,
+  userId: string,
+  collectionId: string
+) {
+  const { data, error } = await supabase
+    .from("collections")
+    .select("id")
+    .eq("id", collectionId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("Collection not found.");
+}
+
+async function assertOwnsNoteAndTag(
+  supabase: SupabaseClient,
+  userId: string,
+  noteId: string,
+  tagId: string
+) {
+  const [noteRes, tagRes] = await Promise.all([
+    supabase.from("notes").select("id").eq("id", noteId).eq("user_id", userId).maybeSingle(),
+    supabase.from("tags").select("id").eq("id", tagId).eq("user_id", userId).maybeSingle(),
+  ]);
+  if (noteRes.error) throw noteRes.error;
+  if (tagRes.error) throw tagRes.error;
+  if (!noteRes.data) throw new Error("Note not found.");
+  if (!tagRes.data) throw new Error("Tag not found.");
+}
+
 // ── Notes ─────────────────────────────────────────────────────────────────────
 
 export async function getNotes(supabase: SupabaseClient): Promise<Note[]> {
+  const userId = await requireUserId(supabase);
   const { data, error } = await supabase
     .from("notes")
-    .select("*")
+    .select(NOTE_COLUMNS)
+    .eq("user_id", userId)
     .order("updated_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
@@ -68,9 +119,11 @@ export async function searchNotes(
 ): Promise<Note[]> {
   assertNonEmpty(query, "Search query");
   assertLength(query, "Search query", LIMITS.searchQuery);
+  const userId = await requireUserId(supabase);
   const { data, error } = await supabase
     .from("notes")
-    .select("*")
+    .select(NOTE_COLUMNS)
+    .eq("user_id", userId)
     .textSearch("fts", query, { type: "websearch", config: "english" })
     .order("updated_at", { ascending: false });
   if (error) throw error;
@@ -85,10 +138,12 @@ export async function createNote(
 ): Promise<Note> {
   assertLength(title, "Title", LIMITS.noteTitle);
   assertLength(body, "Body", LIMITS.noteBody);
+  const userId = await requireUserId(supabase);
+  if (collection_id) await assertOwnsCollection(supabase, userId, collection_id);
   const { data, error } = await supabase
     .from("notes")
     .insert({ title, body, collection_id: collection_id ?? null })
-    .select()
+    .select(NOTE_COLUMNS)
     .single();
   if (error) throw error;
   return data;
@@ -103,11 +158,15 @@ export async function updateNote(
     assertLength(fields.title, "Title", LIMITS.noteTitle);
   if (fields.body !== undefined)
     assertLength(fields.body, "Body", LIMITS.noteBody);
+  const userId = await requireUserId(supabase);
+  if (fields.collection_id)
+    await assertOwnsCollection(supabase, userId, fields.collection_id);
   const { data, error } = await supabase
     .from("notes")
     .update({ ...fields, updated_at: new Date().toISOString() })
     .eq("id", id)
-    .select()
+    .eq("user_id", userId)
+    .select(NOTE_COLUMNS)
     .single();
   if (error) throw error;
   return data;
@@ -117,7 +176,12 @@ export async function deleteNote(
   supabase: SupabaseClient,
   id: string
 ): Promise<void> {
-  const { error } = await supabase.from("notes").delete().eq("id", id);
+  const userId = await requireUserId(supabase);
+  const { error } = await supabase
+    .from("notes")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
   if (error) throw error;
 }
 
@@ -126,9 +190,11 @@ export async function deleteNote(
 export async function getCollections(
   supabase: SupabaseClient
 ): Promise<Collection[]> {
+  const userId = await requireUserId(supabase);
   const { data, error } = await supabase
     .from("collections")
-    .select("*")
+    .select(COLLECTION_COLUMNS)
+    .eq("user_id", userId)
     .order("name", { ascending: true });
   if (error) throw error;
   return data ?? [];
@@ -143,7 +209,7 @@ export async function createCollection(
   const { data, error } = await supabase
     .from("collections")
     .insert({ name: name.trim() })
-    .select()
+    .select(COLLECTION_COLUMNS)
     .single();
   if (error) throw error;
   return data;
@@ -154,11 +220,13 @@ export async function renameCollection(
   id: string,
   name: string
 ): Promise<Collection> {
+  const userId = await requireUserId(supabase);
   const { data, error } = await supabase
     .from("collections")
     .update({ name })
     .eq("id", id)
-    .select()
+    .eq("user_id", userId)
+    .select(COLLECTION_COLUMNS)
     .single();
   if (error) throw error;
   return data;
@@ -167,23 +235,26 @@ export async function renameCollection(
 // ── Tags ──────────────────────────────────────────────────────────────────────
 
 export async function getTags(supabase: SupabaseClient): Promise<Tag[]> {
+  const userId = await requireUserId(supabase);
   const { data, error } = await supabase
     .from("tags")
-    .select("*")
+    .select(TAG_COLUMNS)
+    .eq("user_id", userId)
     .order("name", { ascending: true });
   if (error) throw error;
   return data ?? [];
 }
 
-// Returns a flat list of { note_id, tag } rows for all notes.
+// Returns a flat list of { note_id, tag } rows for all of the caller's notes.
 // Uses two separate queries instead of a join to avoid RLS filtering
 // silently nulling out joined rows.
 export async function getNoteTags(
   supabase: SupabaseClient
 ): Promise<{ note_id: string; tag: Tag }[]> {
+  const userId = await requireUserId(supabase);
   const [noteTagsRes, tagsRes] = await Promise.all([
     supabase.from("note_tags").select("note_id, tag_id"),
-    supabase.from("tags").select("id, name"),
+    supabase.from("tags").select(TAG_COLUMNS).eq("user_id", userId),
   ]);
   if (noteTagsRes.error) throw noteTagsRes.error;
   if (tagsRes.error) throw tagsRes.error;
@@ -207,7 +278,7 @@ export async function createTag(
   const { data, error } = await supabase
     .from("tags")
     .insert({ name: name.trim() })
-    .select()
+    .select(TAG_COLUMNS)
     .single();
   if (error) throw error;
   return data;
@@ -217,9 +288,11 @@ export async function findTagByName(
   supabase: SupabaseClient,
   name: string
 ): Promise<Tag | null> {
+  const userId = await requireUserId(supabase);
   const { data, error } = await supabase
     .from("tags")
-    .select("*")
+    .select(TAG_COLUMNS)
+    .eq("user_id", userId)
     .eq("name", name.trim())
     .maybeSingle();
   if (error) throw error;
@@ -231,6 +304,8 @@ export async function addTagToNote(
   noteId: string,
   tagId: string
 ): Promise<void> {
+  const userId = await requireUserId(supabase);
+  await assertOwnsNoteAndTag(supabase, userId, noteId, tagId);
   const { error } = await supabase
     .from("note_tags")
     .insert({ note_id: noteId, tag_id: tagId });
@@ -242,6 +317,8 @@ export async function removeTagFromNote(
   noteId: string,
   tagId: string
 ): Promise<void> {
+  const userId = await requireUserId(supabase);
+  await assertOwnsNoteAndTag(supabase, userId, noteId, tagId);
   const { error } = await supabase
     .from("note_tags")
     .delete()
