@@ -78,18 +78,21 @@ alter table note_tags enable row level security;
 drop policy if exists "users own their collections" on collections;
 create policy "users own their collections"
   on collections for all
+  to authenticated
   using ((select auth.uid()) = user_id)
   with check ((select auth.uid()) = user_id);
 
 drop policy if exists "users own their notes" on notes;
 create policy "users own their notes"
   on notes for all
+  to authenticated
   using ((select auth.uid()) = user_id)
   with check ((select auth.uid()) = user_id);
 
 drop policy if exists "users own their tags" on tags;
 create policy "users own their tags"
   on tags for all
+  to authenticated
   using ((select auth.uid()) = user_id)
   with check ((select auth.uid()) = user_id);
 
@@ -99,6 +102,7 @@ create policy "users own their tags"
 drop policy if exists "users own their note_tags" on note_tags;
 create policy "users own their note_tags"
   on note_tags for all
+  to authenticated
   using (
     exists (
       select 1 from notes

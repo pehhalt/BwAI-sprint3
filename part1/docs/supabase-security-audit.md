@@ -103,6 +103,44 @@ replayed on (a fresh staging project, a CI pipeline, etc.), silently
 attaching sample notes to whichever real user happened to sign up first
 there.
 
+## Round 5: `/security-scan` (part3) — policies not pinned to a role, plus untracked drift
+
+The part3 `supabase-security-scanner` (a different subagent than this doc's
+`security-auditor`, built from the official `supabase`/
+`supabase-postgres-best-practices` agent skills rather than the hand-written
+one) flagged that all 4 RLS policies had no `to authenticated` clause —
+they applied to `PUBLIC` (including `anon`) rather than being scoped to the
+role they're actually meant for. Not exploitable (every policy's condition
+is `(select auth.uid()) = user_id`, and `auth.uid()` is `NULL` for `anon`),
+but it relied entirely on that one comparison rather than the database also
+refusing to evaluate the policy for `anon` at all.
+
+Fixed in `supabase/migrations/20260723000000_pin_rls_policies_to_authenticated.sql`
+(and `20260601000000_notes_app_schema.sql` updated to match, per the usual
+pattern). Applied directly via the dashboard SQL Editor rather than
+`supabase db push`, since the CLI wasn't authenticated in the session doing
+the fix — the exact same SQL either way.
+
+Verifying the fix against live `pg_policies` surfaced something the fix
+itself didn't touch: **two extra policies on `notes`** —
+`"users can insert their own notes"` and `"users can read their own
+notes"` — that don't exist in any migration in this repo. They must
+predate this project's migration history rather than having been created
+by anything here. Their conditions (`auth.uid() = user_id`) were equivalent
+to what `"users own their notes"` already covers, just weaker in form
+(`{public}` role, uncached `auth.uid()`), so not a live gap — but untracked
+live-database state contradicts this project's whole reason for versioning
+RLS in migrations ("reviewable and reproducible from source instead of
+living only in the dashboard"). Dropped both, folded into the same
+migration. Final state, verified via `pg_policies`: exactly 4 policies
+across the 4 tables, one each, all `{authenticated}` — matching source
+exactly.
+
+This is the same fresh-context-catches-things-a-carried-context-would-miss
+pattern noted elsewhere in this project's history: the fix task was "add
+`to authenticated`," not "audit for drift," but checking the live result
+rather than trusting the `DDL` "success" message is what caught it.
+
 ## A recurring false positive, worth knowing about
 
 Every audit pass flagged "no `.gitignore`, so `.env.local` isn't excluded

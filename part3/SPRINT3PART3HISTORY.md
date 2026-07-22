@@ -296,6 +296,45 @@ work only.
         Protection or an app-level error
       - All 4 findings from the `/security-scan` rescan (1 High, 3
         Medium) are now resolved — 3 in code, 1 via Firewall config
+- [x] Ran `/security-scan` again to confirm the clean-up — all 3 scanners
+      dispatched in parallel a second time, each explicitly re-verifying
+      its earlier fix under fresh context rather than assuming it held:
+      **0 critical, 0 high, 1 medium, 6 low**
+      - Next.js scanner: confirmed all 3 prior fixes (`getNoteTags`
+        scoping, `renameCollection` validation, `proxy.ts` fail-closed)
+        hold up; one new Low (3 DAL insert paths depend on the
+        `set_user_id()` trigger rather than passing `user_id` explicitly)
+      - Vercel scanner: confirmed the Firewall rate-limit rule is still
+        live via a light re-check (`403` + `X-Vercel-Mitigated: deny`
+        after the window), confirmed the security-headers fix still
+        holds; 3 new Lows (CSP `unsafe-inline`, an unexplained
+        `Access-Control-Allow-Origin: *` on public pages, env var
+        Sensitive flag inconsistent for Development)
+      - Supabase scanner: re-surfaced the `TO authenticated` clause
+        finding, this time at Medium (previously Low); 2 new Lows
+        (`FORCE ROW LEVEL SECURITY` not set; migrations don't capture
+        the `anon`/`authenticated` `GRANT`s the Data API depends on)
+- [x] Fixed the Medium: added `to authenticated` to all 4 RLS policies —
+      `supabase/migrations/20260723000000_pin_rls_policies_to_authenticated.sql`
+      (+ `20260601000000_notes_app_schema.sql` updated to match, per this
+      project's established pattern for RLS migrations)
+      - CLI wasn't authenticated in-session (`supabase login` needs a
+        browser), so applied via the dashboard SQL Editor instead of
+        `supabase db push` — same SQL either way
+      - Verifying against live `pg_policies` (rather than trusting the
+        "Success" message) surfaced **untracked drift**: two extra
+        policies on `notes` (`"users can insert their own notes"`,
+        `"users can read their own notes"`) that exist on the live
+        project but appear in no migration in this repo. Functionally
+        harmless (same `auth.uid() = user_id` condition, just weaker
+        form — `{public}`, uncached), but contradicts this project's own
+        reason for versioning RLS in migrations. Dropped both, folded
+        into the same migration. Final state confirmed live: exactly 4
+        policies, one per table, all `{authenticated}` — matches source
+        exactly
+      - Documented as Round 5 in `part1/docs/supabase-security-audit.md`,
+        the project's dedicated audit-history doc, alongside the 4 prior
+        rounds
 
 ## Vercel deployment-gating + defence-in-depth (post-deploy, if deployed)
 
@@ -311,8 +350,10 @@ work only.
       domains restricted (no wildcard), no caching of pages containing
       a signed-in user's private data
 - [ ] Optional: enable Attack Challenge Mode toggle location documented
-- [ ] Optional: add a Vercel Firewall rate-limit rule if a public API
-      endpoint exists
+- [x] Optional: add a Vercel Firewall rate-limit rule if a public API
+      endpoint exists — done as the fix for the `/security-scan` rate
+      limiting finding above (20 req/60s per IP, scoped to `/auth/*` and
+      the `next-action` header for Server Actions), verified live
 
 ## Notes / decisions log
 
