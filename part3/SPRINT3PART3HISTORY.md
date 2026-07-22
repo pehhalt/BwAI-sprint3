@@ -231,13 +231,18 @@ work only.
 
 ## Combined slash commands (efficiency pass)
 
-- [ ] Create `/security-scan` (`.claude/commands/security-scan.md`) —
-      runs all 3 scanners in parallel, merges into one severity-grouped
-      report, de-duping findings flagged by multiple scanners
-- [ ] Create `/security-scan-changed`
-      (`.claude/commands/security-scan-changed.md`) — same, but scoped
-      to files changed vs. `main` only (day-to-day/PR use;
-      `/security-scan` reserved for periodic full-codebase runs)
+- [x] Created `/security-scan` (`.claude/commands/security-scan.md`) —
+      runs all 3 scanners in parallel (single message, 3 Agent calls),
+      merges into one severity-grouped report, de-duping findings
+      flagged by multiple scanners
+- [x] Created `/security-scan-changed`
+      (`.claude/commands/security-scan-changed.md`) — identifies changed
+      files via `git diff --name-only main...HEAD` + `git status --short`
+      first, scopes all 3 scanners to just those files (vercel scanner
+      skips its full audit if nothing deployment-relevant changed),
+      same merge/dedupe behavior. Day-to-day/PR use;
+      `/security-scan` reserved for periodic full-codebase runs
+- [ ] Not yet run/tested this session — needs `/reload-plugins` first
 
 ## Vercel deployment-gating + defence-in-depth (post-deploy, if deployed)
 
