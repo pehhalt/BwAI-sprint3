@@ -184,7 +184,7 @@ implementer + reviewer subagent):
       audited/migrated code), then `vercel link` + `vercel env add`
       (`NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`,
       all 3 scopes) + `vercel --prod`
-      - **Production URL:** https://bwai-notes-app.vercel.app
+      - **Production URL:** <https://bwai-notes-app.vercel.app>
       - Confirmed genuinely public (200, real content) — no Deployment
         Protection wall this time, unlike part2's `vercel-deploy-lab`
         gotcha under the same team
