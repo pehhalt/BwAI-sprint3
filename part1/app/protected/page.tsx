@@ -2,7 +2,10 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getNotes, getCollections, getTags, getNoteTags, type Tag } from "@/app/lib/db";
+import { getNotesAction } from "@/app/actions/notes";
+import { getCollectionsAction } from "@/app/actions/collections";
+import { getTagsAction, getNoteTagsAction } from "@/app/actions/tags";
+import type { Tag } from "@/app/lib/db";
 import NotesWorkspace from "@/components/notes/notes-workspace";
 import NotesSkeleton from "@/components/notes/notes-skeleton";
 
@@ -16,10 +19,10 @@ async function NotesLoader() {
   if (!user) redirect("/auth/login");
 
   const [notes, collections, tags, noteTagRows] = await Promise.all([
-    getNotes(supabase),
-    getCollections(supabase),
-    getTags(supabase),
-    getNoteTags(supabase),
+    getNotesAction(),
+    getCollectionsAction(),
+    getTagsAction(),
+    getNoteTagsAction(),
   ]);
 
   // Build noteId → Tag[] map

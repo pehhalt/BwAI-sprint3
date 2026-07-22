@@ -1,12 +1,13 @@
 import { useRef, useState } from "react";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { getNotes, createNote, updateNote, deleteNote, type Note } from "@/app/lib/db";
+import {
+  getNotesAction,
+  createNoteAction,
+  updateNoteAction,
+  deleteNoteAction,
+} from "@/app/actions/notes";
+import type { Note } from "@/app/lib/db";
 
-export function useNotes(
-  supabase: SupabaseClient,
-  initialNotes: Note[],
-  onError: (msg: string) => void
-) {
+export function useNotes(initialNotes: Note[], onError: (msg: string) => void) {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [selectedId, setSelectedId] = useState<string | null>(
     initialNotes[0]?.id ?? null
@@ -29,7 +30,7 @@ export function useNotes(
   // commit/merge/report errors identically.
   async function commitSave(id: string, t: string, b: string) {
     try {
-      const updated = await updateNote(supabase, id, { title: t, body: b });
+      const updated = await updateNoteAction(id, { title: t, body: b });
       setNotes((prev) => prev.map((n) => (n.id === id ? updated : n)));
     } catch (e) {
       console.error("Save failed:", e);
@@ -88,7 +89,7 @@ export function useNotes(
   async function handleNewNote(): Promise<boolean> {
     try {
       await flushPendingSave();
-      const note = await createNote(supabase, "Untitled", "");
+      const note = await createNoteAction("Untitled", "");
       setNotes((prev) => [note, ...prev]);
       setSelectedId(note.id);
       setTitle(note.title);
@@ -109,7 +110,7 @@ export function useNotes(
     }
     dirtyRef.current = null;
     try {
-      await deleteNote(supabase, idToDelete);
+      await deleteNoteAction(idToDelete);
       const remaining = notes.filter((n) => n.id !== idToDelete);
       setNotes(remaining);
       const next = remaining[0] ?? null;
@@ -126,7 +127,7 @@ export function useNotes(
   async function handleAssignCollection(collectionId: string | null) {
     if (!selectedId) return;
     try {
-      const updated = await updateNote(supabase, selectedId, {
+      const updated = await updateNoteAction(selectedId, {
         collection_id: collectionId,
       });
       setNotes((prev) => prev.map((n) => (n.id === selectedId ? updated : n)));
@@ -144,7 +145,7 @@ export function useNotes(
   async function handleMoveNote(noteId: string, collectionId: string | null) {
     setContextMenu(null);
     try {
-      const updated = await updateNote(supabase, noteId, {
+      const updated = await updateNoteAction(noteId, {
         collection_id: collectionId,
       });
       setNotes((prev) => prev.map((n) => (n.id === noteId ? updated : n)));
@@ -155,7 +156,7 @@ export function useNotes(
 
   async function handleRefresh() {
     try {
-      const fresh = await getNotes(supabase);
+      const fresh = await getNotesAction();
       setNotes(fresh);
     } catch {
       onError("Failed to load notes.");

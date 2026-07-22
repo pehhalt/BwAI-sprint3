@@ -44,3 +44,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Claude Code skill symlinks created by `npx skills add` (point at
+# .agents/skills/, the real committed content). Not tracked because this
+# checkout has core.symlinks=false, so git would dereference them into
+# duplicate copies instead of storing the symlink. Regenerate with
+# `npx skills add supabase/agent-skills` after a fresh clone.
+.claude/skills/supabase
+.claude/skills/supabase-postgres-best-practices

@@ -1,9 +1,11 @@
 import { useState } from "react";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { createCollection, renameCollection, type Collection } from "@/app/lib/db";
+import {
+  createCollectionAction,
+  renameCollectionAction,
+} from "@/app/actions/collections";
+import type { Collection } from "@/app/lib/db";
 
 export function useCollections(
-  supabase: SupabaseClient,
   initialCollections: Collection[],
   onError: (msg: string) => void
 ) {
@@ -40,7 +42,7 @@ export function useCollections(
     setRenamingCollectionId(null);
     if (!name || name === collections.find((c) => c.id === id)?.name) return;
     try {
-      const updated = await renameCollection(supabase, id, name);
+      const updated = await renameCollectionAction(id, name);
       setCollections((prev) =>
         prev.map((c) => (c.id === id ? updated : c))
             .sort((a, b) => a.name.localeCompare(b.name))
@@ -55,7 +57,7 @@ export function useCollections(
     const name = newCollectionName.trim();
     if (!name) return;
     try {
-      const collection = await createCollection(supabase, name);
+      const collection = await createCollectionAction(name);
       setCollections((prev) =>
         [...prev, collection].sort((a, b) => a.name.localeCompare(b.name))
       );
