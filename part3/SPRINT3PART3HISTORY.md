@@ -277,14 +277,23 @@ work only.
         `next build` all clean; the 2 pre-existing lint errors in
         unrelated files (`theme-switcher.tsx`, `collection-header.tsx`)
         predate this change
-- [ ] Third Medium (no rate limiting) deliberately **not** fixed in code —
+- [x] Third Medium (no rate limiting) deliberately **not** fixed in code —
       asked which approach to take (Vercel Firewall dashboard rule vs.
       Upstash Redis vs. in-memory-only limiter vs. skip); chose the
       **Vercel Firewall dashboard rule**, since it needs no new dependency
       or infra and this project already had "add a Vercel Firewall
-      rate-limit rule" as an open post-deploy TODO below. Dashboard-only —
-      requires manual setup in the Vercel UI (may need the Pro plan; not
-      confirmed for this team). Not done yet this session.
+      rate-limit rule" as an open post-deploy TODO below. Dashboard-only,
+      so the Pro-plan question resolved itself by the rule existing at
+      all — user created the rule in the Vercel dashboard per the
+      suggested scope/threshold.
+      - Verified live rather than trusting the dashboard: 30 rapid
+        requests to `https://bwai-notes-app.vercel.app/auth/login`
+        returned `200` for the first 20, then `403` from request 21
+        onward, with `X-Vercel-Mitigated: deny` in the response headers —
+        confirms the Firewall rule itself is mitigating, not Deployment
+        Protection or an app-level error
+      - All 4 findings from the `/security-scan` rescan (1 High, 3
+        Medium) are now resolved — 3 in code, 1 via Firewall config
 
 ## Vercel deployment-gating + defence-in-depth (post-deploy, if deployed)
 
