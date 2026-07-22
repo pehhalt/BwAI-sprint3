@@ -158,25 +158,63 @@ implementer + reviewer subagent):
 
 ### Step 8 — Build + run `vercel-security-scanner`
 
-Not started this session — the notes app isn't deployed to Vercel yet,
-and several of this scanner's checks (env var scoping, Deployment
-Protection, live security headers) can't be meaningfully audited
-pre-deploy. Deferred, tracked as its own future step.
-
-- [ ] **Decide/confirm**: does this require deploying `part1/` to Vercel
-      first? (Env var scoping, Sensitive flag, Deployment Protection,
-      and live security headers can't be audited pre-deploy.)
-- [ ] If deploying: import `part1/` into Vercel (Root Directory =
-      `part1`), set `NEXT_PUBLIC_SUPABASE_URL` /
-      `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, confirm Google OAuth
-      redirect URLs updated for the new domain
-- [ ] Create subagent (no official skill exists for this one — built
-      from the lesson's risk list directly)
-- [ ] Checks for: env var scoping (Production/Preview/Development) +
-      Sensitive flag, Deployment Protection on preview URLs, security
-      headers (CSP, X-Frame-Options, X-Content-Type-Options) actually
-      deployed, signs of a previously-leaked/unrotated secret
-- [ ] Dispatch `@vercel-security-scanner`, fix, clear context, rescan
+- [x] Create subagent `vercel-security-scanner`
+      (`.claude/agents/vercel-security-scanner.md`) — no official skill
+      exists for this one, built directly from the lesson's risk list.
+      Checks env var scoping + Sensitive flag, Deployment Protection,
+      security headers (CSP, X-Frame-Options, X-Content-Type-Options),
+      and signs of a previously-committed/unrotated secret. Designed to
+      check project-linkage first and mark dashboard-only checks as
+      "not applicable" rather than guess, since at build time `part1/`
+      wasn't deployed yet.
+- [x] Dispatched **before** deploying — result:
+      **0 critical, 1 high, 2 medium (both unverifiable — not deployed), 2 low**
+      - High: no security headers configured anywhere (`next.config.ts`
+        has no `headers()`, no `vercel.json`) — repo-verifiable
+        regardless of deployment status
+      - Medium ×2 (correctly marked unverified, not guessed): Deployment
+        Protection status, env var scoping/Sensitive flag — both
+        dashboard-only, no linked project existed yet to check
+      - Low: no `vercel.json` at all; `.env.local` correctly gitignored,
+        never committed
+      - Bonus: full `git log --all -p` secrets-in-history scan across
+        the whole repo — clean, nothing to rotate
+- [x] **Deployed `part1/` to Vercel** to make the rest of this
+      checkable — merged PR #2 to `main` first (so production runs the
+      audited/migrated code), then `vercel link` + `vercel env add`
+      (`NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`,
+      all 3 scopes) + `vercel --prod`
+      - **Production URL:** https://bwai-notes-app.vercel.app
+      - Confirmed genuinely public (200, real content) — no Deployment
+        Protection wall this time, unlike part2's `vercel-deploy-lab`
+        gotcha under the same team
+      - Added `https://bwai-notes-app.vercel.app/**` to Supabase's
+        Redirect URLs (Authentication > URL Configuration) — Google
+        OAuth and email links build their redirect from
+        `window.location.origin`, so this was needed for login to work
+        on the deployed domain; no Google Cloud Console change needed
+        (Google only ever talks to Supabase's own callback URL)
+      - **Confirmed: Google sign-in works on the live deployment**
+- [x] Rescanned `vercel-security-scanner` now that a project is linked —
+      result: **0 critical, 1 high, 0 medium, 2 low**
+      - Both previously-unverified mediums resolved clean: Deployment
+        Protection confirmed genuinely enabled (verified via `curl` —
+        direct deployment URLs redirect to Vercel's SSO challenge, the
+        production alias is correctly public); env var scoping/Sensitive
+        flag checked via `vercel env ls`, no leaked secrets, both public
+        vars correctly present in all 3 environments
+      - High (security headers) confirmed live via `curl` — only HSTS
+        present, no CSP/X-Frame-Options/X-Content-Type-Options
+- [x] Fixed the High finding: added a `headers()` block to
+      `next.config.ts` (CSP scoped to `'self'` + the app's own Supabase
+      URL for `connect-src`, `frame-ancestors 'none'` + `X-Frame-Options:
+      DENY`, `X-Content-Type-Options: nosniff`). Verified locally
+      (`tsc`/`eslint` clean, `next build` + `next start` confirmed all 3
+      headers present), committed directly to `main` (`981012b` — no PR
+      this round, small/verified/already mid-deploy), redeployed,
+      confirmed live via `curl` against production
+- [ ] 2 Low findings left open (no `vercel.json`; env hygiene already
+      confirmed clean, not a defect) — not fixed, low priority
 
 ### Step 9 — Wrap up
 
