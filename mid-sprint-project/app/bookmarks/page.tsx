@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { listBookmarks } from "@/app/lib/db";
 import { logOutAction } from "@/app/auth/actions";
-import { createBookmarkAction } from "./actions";
+import { createBookmarkAction, deleteBookmarkAction } from "./actions";
 
 export default async function BookmarksPage() {
   const supabase = await createClient();
@@ -30,8 +30,14 @@ export default async function BookmarksPage() {
 
       <ul className="flex flex-col gap-2">
         {bookmarks.map((b) => (
-          <li key={b.id} className="border rounded p-2">
+          <li key={b.id} className="border rounded p-2 flex justify-between items-center">
             <a href={b.url} className="underline">{b.title}</a>
+            <form action={deleteBookmarkAction}>
+              <input type="hidden" name="id" value={b.id} />
+              <button type="submit" aria-label={`Delete ${b.title}`} className="text-sm underline">
+                Delete
+              </button>
+            </form>
           </li>
         ))}
       </ul>

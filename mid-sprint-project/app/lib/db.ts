@@ -27,3 +27,9 @@ export async function createBookmark(url: string, title: string): Promise<Bookma
   if (error) throw error;
   return data;
 }
+
+export async function deleteBookmark(id: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("bookmarks").delete().eq("id", id);
+  if (error) throw error;
+}
