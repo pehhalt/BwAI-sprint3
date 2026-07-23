@@ -1,11 +1,15 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { listBookmarks } from "@/app/lib/db";
 import { logOutAction } from "@/app/auth/actions";
+import { createBookmarkAction } from "./actions";
 
 export default async function BookmarksPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  const bookmarks = await listBookmarks();
 
   return (
     <main className="mx-auto max-w-lg p-8">
@@ -15,7 +19,22 @@ export default async function BookmarksPage() {
           <button type="submit" className="underline text-sm">Log out</button>
         </form>
       </div>
-      <p className="text-sm text-gray-500">Save/list/delete lands in Task 6.</p>
+
+      <form action={createBookmarkAction} className="flex gap-2 mb-6">
+        <label htmlFor="title" className="sr-only">Title</label>
+        <input id="title" name="title" placeholder="Title" required className="border rounded p-2 flex-1" />
+        <label htmlFor="url" className="sr-only">URL</label>
+        <input id="url" name="url" type="url" placeholder="https://example.com" required className="border rounded p-2 flex-1" />
+        <button type="submit" className="border rounded p-2">Save</button>
+      </form>
+
+      <ul className="flex flex-col gap-2">
+        {bookmarks.map((b) => (
+          <li key={b.id} className="border rounded p-2">
+            <a href={b.url} className="underline">{b.title}</a>
+          </li>
+        ))}
+      </ul>
     </main>
   );
 }
