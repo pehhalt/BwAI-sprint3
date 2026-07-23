@@ -1,7 +1,11 @@
 import type { Note, Tag } from "@/app/lib/db";
 
 export function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
+  // Pinned to a fixed locale rather than the runtime default: the server
+  // (Node) and client (browser) can resolve different default locales,
+  // producing different formatted strings for the same date and causing
+  // a hydration mismatch on every page load.
+  return new Date(iso).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
   });
