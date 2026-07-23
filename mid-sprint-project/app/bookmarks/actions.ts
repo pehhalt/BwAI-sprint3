@@ -14,6 +14,16 @@ export async function createBookmarkAction(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   if (!url || !title) throw new Error("URL and title are required");
 
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error("URL must be a valid absolute URL");
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error("URL must use http or https");
+  }
+
   await createBookmark(url, title);
   revalidatePath("/bookmarks");
 }
