@@ -1,5 +1,7 @@
 # Mid-Sprint Project — Secured Bookmarks App
 
+Live URL: https://mid-sprint-project.vercel.app
+
 Status: **plan written, not yet started.** Start here tomorrow.
 
 This is the course's mid-sprint deliverable ("Ship a Secured App and Prove
