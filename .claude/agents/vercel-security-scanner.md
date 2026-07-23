@@ -13,8 +13,9 @@ No official Vercel security skill exists for this (unlike Supabase's
 official `agent-skills` package) — your checklist below is built directly
 from Vercel's own documented risk surface.
 
-When invoked, audit the target app (ask which directory if not given — for
-this repo it is `part1/`) and report findings grouped by severity: critical,
+When invoked, audit the target app (ask which directory if not given — this
+repo currently has `part1/` and `mid-sprint-project/`) and report findings
+grouped by severity: critical,
 high, medium, low. Do not change any files or any Vercel project settings —
 findings only.
 

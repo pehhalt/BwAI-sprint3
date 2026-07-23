@@ -2,18 +2,23 @@
 description: Run all three security scanners (Supabase, Next.js, Vercel) in parallel against the full app and merge findings into one severity-grouped report
 ---
 
-Run a full security audit of the app at `part1/` using all three scanner
+Run a full security audit of one app in this repo using all three scanner
 subagents.
 
+Determine the target directory: if the user gave one as an argument, use
+it. Otherwise ask which app to scan (this repo currently has `part1/` and
+`mid-sprint-project/`) — never assume a default silently.
+
 1. Dispatch all three in parallel — a single message with three Agent tool
-   calls, not three separate messages:
-   - `supabase-security-scanner` — audit `part1/` for RLS gaps, policy
-     gaps, `service_role` key exposure, public storage buckets
-   - `nextjs-security-scanner` — audit `part1/` for data crossing the
-     server/client boundary, server-action auth gaps, IDOR risk
+   calls, not three separate messages, each told the target directory:
+   - `supabase-security-scanner` — audit the target directory for RLS
+     gaps, policy gaps, `service_role` key exposure, public storage buckets
+   - `nextjs-security-scanner` — audit the target directory for data
+     crossing the server/client boundary, server-action auth gaps, IDOR
+     risk
    - `vercel-security-scanner` — audit the Vercel deployment configuration
-     for `part1/` (env var scoping, Deployment Protection, security
-     headers, signs of a leaked secret)
+     for the target directory (env var scoping, Deployment Protection,
+     security headers, signs of a leaked secret)
 
    Each scan is the whole app / whole deployment — do not scope any of
    them to a subset of files for this command (that's what
