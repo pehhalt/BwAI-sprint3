@@ -4,6 +4,27 @@ export function uniqueTitle(label: string): string {
   return `${label} ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// Clicks "New note" and waits for the note to actually be created and
+// selected before returning. The button's onClick handler
+// (components/notes/notes-workspace.tsx newNote) is async and not
+// awaited by React, so a bare .click() returns as soon as the new note
+// has been created (a note is already open by default whenever the
+// account has any notes at all), causing any immediately-following
+// input into "the" title field to land on the wrong (previously
+// selected) note. createNoteAction("Untitled", "") always sends this
+// exact JSON-encoded argument list as its POST body, so matching on it
+// precisely identifies the creation request rather than any other POST
+// to the same page URL.
+export async function createNoteAndWait(page: Page): Promise<void> {
+  const responsePromise = page.waitForResponse(
+    (res) =>
+      res.request().method() === "POST" &&
+      res.request().postData() === '["Untitled",""]'
+  );
+  await page.getByTitle("New note").click();
+  await responsePromise;
+}
+
 // Fills a field and waits for the app's debounced autosave (800ms, see
 // components/notes/hooks/use-notes.ts) to actually round-trip to the
 // server, so the caller can safely assert on state that only updates

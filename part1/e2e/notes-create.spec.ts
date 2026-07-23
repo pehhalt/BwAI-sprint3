@@ -1,14 +1,13 @@
 import { test, expect } from "@playwright/test";
-import { uniqueTitle, editAndWaitForSave } from "./helpers";
+import { uniqueTitle, editAndWaitForSave, createNoteAndWait } from "./helpers";
 
 test("creating a note adds it to the notes list", async ({ page }) => {
   await page.goto("/protected");
 
   const title = uniqueTitle("E2E Create");
 
-  await page.getByTitle("New note").click();
+  await createNoteAndWait(page);
   const titleInput = page.getByPlaceholder("Untitled");
-  await expect(titleInput).toBeVisible();
   await editAndWaitForSave(page, titleInput, title);
 
   // Reload so the assertion reflects real persisted state rather than
