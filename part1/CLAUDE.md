@@ -22,6 +22,16 @@ This file provides guidance for building the notes app in `part4/`. It lives alo
 
 ---
 
+## Testing
+
+Use the CLI for one-off tasks. Use MCP when the agent needs to repeat or
+react to what's on screen.
+
+- `npx playwright test` (CLI) — run the e2e suite before and after every change.
+- Playwright MCP — live browser control, for exploring behaviour that doesn't have a test yet or confirming a freshly built feature actually renders/works.
+
+---
+
 ## Authentication
 
 All authentication is handled by Supabase Auth. The app supports email/password and Google OAuth sign-in.
