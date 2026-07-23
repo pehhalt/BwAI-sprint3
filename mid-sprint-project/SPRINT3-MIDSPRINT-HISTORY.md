@@ -1,9 +1,11 @@
-# What happened before the plan was written — Mid-Sprint Project
+# Planning and execution history — Mid-Sprint Project
 
 This isn't a `partN` lesson write-up like `part2`–`part4`'s history files —
-it's the planning log for the mid-sprint deliverable itself, kept for the
-same reason: so a fresh session can see what was already decided without
-re-reading the whole conversation.
+it's the planning and build log for the mid-sprint deliverable itself, kept
+for the same reason: so a fresh session can see what was already decided
+and what actually happened without re-reading the whole conversation. The
+first half covers planning (before any code existed); the "Execution
+summary" section near the end covers the build itself, Tasks 1–10.
 
 ## Task received
 
@@ -77,14 +79,10 @@ scan and fix findings → fresh-context rescan + `REFLECTION.md`.
 ## Execution approach chosen
 
 **Subagent-driven** (`superpowers:subagent-driven-development`) — a fresh
-subagent per task, with review between tasks. Not yet started (deliberately
-paused here to resume fresh tomorrow).
-
-## Notes / decisions log
-
-Nothing built yet as of this entry — no `create-next-app`, no Supabase
-project, no commits beyond these planning docs. Task 1 of the plan is the
-next action.
+subagent per task, with review between tasks (spec compliance + code
+quality), executed continuously through Task 10 in one later session. Task
+11 (the fresh-context rescan) is deliberately left for a separate session,
+per the plan's own requirement.
 
 ## Incident: Task 1 scaffold deleted this docs/ folder and README.md
 
@@ -104,3 +102,107 @@ target), either commit any existing untracked files in that directory
 first, or scaffold into a temp directory and move the generated files in
 — never run the generator directly over a directory holding not-yet-committed
 planning docs.
+
+## Execution summary (Tasks 1–10 complete)
+
+All ten build tasks ran via `superpowers:subagent-driven-development` — a
+fresh implementer subagent per task, then a fresh reviewer subagent
+grading spec compliance and code quality, with fix-and-re-review loops
+where needed. Full per-task detail (commits, reviewer verdicts, evidence)
+lives in the session's progress ledger; this is the condensed version.
+
+**Tasks 1–8 (scaffold through redeploy+reverify):** all approved on first
+or second pass, no unresolved Critical/Important findings. Notable events:
+
+- **Task 1 incident:** as described above — `create-next-app` deleted the
+  pre-existing `docs/`, `README.md`, and this file; recovered from the
+  conversation transcript and committed separately.
+- **Task 2 commit-hygiene bug:** `npm install`'s `package.json`/
+  `package-lock.json` changes were left uncommitted because the plan's own
+  `git add` command for that step didn't list them — caught by the task
+  reviewer, fixed directly by the controller. The same bug class was
+  explicitly watched for in every later task that ran `npm install`
+  (Task 3's Playwright init, Task 10's `server-only` install) and did not
+  recur.
+- **Task 3 live-Supabase blockers:** the plan's test hardcodes
+  `...@example.com`, which Supabase rejects as a reserved test domain —
+  fixed by swapping only the domain to `@test-mid-sprint.dev` (human-approved,
+  no assertions touched), reused consistently in every later test file.
+  Separately, "Confirm email" was still on in the Supabase dashboard despite
+  being turned off earlier — user re-checked and fixed it, verified via the
+  Auth API (`mailer_autoconfirm: true`).
+- **Tasks 4–5 (deploy, RLS migration):** Vercel CLI and Supabase CLI were
+  authenticated non-interactively (Vercel: already logged in as `pehhalt`;
+  Supabase: a human-provided personal access token, `SUPABASE_ACCESS_TOKEN`,
+  rather than the interactive browser login the plan's literal text
+  describes). Task 5's RLS was independently re-verified by the reviewer via
+  live Management API queries (`pg_class.relrowsecurity`, `pg_policies`),
+  not just trusted from the implementer's report.
+- **Tasks 6–8:** save/list, delete, and the redeploy+incognito-walkthrough
+  all passed clean, including independent re-verification against the live
+  production URL (curl + Playwright) by both the implementer and the
+  reviewer.
+
+**Task 9:** repointed `/security-scan` and `vercel-security-scanner.md` to
+ask for/accept a target directory instead of assuming `part1/` — mechanical
+text edit, approved clean.
+
+**Task 10 — security scan and fixes:**
+
+Full `/security-scan` (all three scanners in parallel) against
+`mid-sprint-project/` found **0 critical**, **2 High**, **4 Medium**, **5
+Low**:
+
+- High: no application-level ownership checks in `app/lib/db.ts` (RLS was
+  the sole enforcement layer, correctly scoped but a single point of
+  failure with no code-level backstop); no security headers configured,
+  combined with an unsanitized bookmark URL rendered as a raw `href`
+  (self-XSS risk via a `javascript:` URI bookmark, since RLS limits it to
+  the attacker's own list).
+- Medium: Vercel env vars scoped to Production only, not Preview/
+  Development; `app/lib/db.ts` missing a `server-only` build guard; signup
+  errors propagated Supabase's raw text, enabling email enumeration; no
+  application-level rate limiting on login/signup.
+- Low (deliberately deferred, not required by the task spec): missing
+  `UPDATE` policy on `bookmarks` (inert — no edit feature exists); default
+  Postgres GRANTs to `anon`/`authenticated` remain on the table (RLS
+  already fully blocks `anon`, verified); `deleteBookmark` doesn't check
+  affected row count (silent no-op deleting a nonexistent/foreign id,
+  harmless under RLS); no format validation on the bookmark `id` before it
+  reaches the DB; Preview-deployment protection inferred but not directly
+  tested (no Preview deployment existed to test against).
+
+Both High findings and, at the user's request, all four Medium findings
+were fixed and independently reviewed-approved:
+
+- **High fixes** (commit `72faeea`): explicit `user_id` scoping added to
+  every function in `app/lib/db.ts` as defense-in-depth on top of
+  untouched RLS (not a replacement); a `headers()` function in
+  `next.config.ts` adding CSP/`X-Frame-Options`/`X-Content-Type-Options`;
+  an `http`/`https`-only scheme allow-list in `createBookmarkAction`. The
+  reviewer independently re-ran the Playwright suite and curled the dev
+  server to confirm the headers were real, not just claimed. One
+  non-blocking note: the CSP's `script-src 'unsafe-inline'` means the CSP
+  itself doesn't actually block `javascript:` URI navigation per spec —
+  the real protection against that specific vector is the URL-scheme
+  allow-list, not the CSP. Not a live gap (input validation already closes
+  it), but worth knowing the CSP isn't a true second layer for that one
+  vector.
+- **Medium fixes** (commit `03792ce`): `server-only` guard on `db.ts`
+  (`npm install`'s manifest changes correctly committed this time); signup
+  error generalized only for the "already registered" case (via
+  `error.code` plus a message-regex fallback, verified against Supabase's
+  actual `AuthError` shape), leaving other genuine errors specific; an
+  in-process, per-email rate limiter (5 attempts/60s) on both signup and
+  login, with its cross-serverless-instance limitation candidly documented
+  in a code comment rather than glossed over; Vercel env vars added to
+  Preview and Development scopes (dashboard-only, no commit). The reviewer
+  independently wrote and ran temporary Playwright checks against the live
+  dev server to verify the enumeration fix and rate limiter, then deleted
+  them and confirmed a clean working tree.
+
+**Status as of this entry:** Tasks 1–10 complete and committed on `main`.
+Task 11 (fresh-context rescan + `REFLECTION.md`) is the only remaining
+step — it must run in a genuinely new Claude Code session per the plan's
+explicit warning, so it could not be completed in the same session as the
+fixes above.

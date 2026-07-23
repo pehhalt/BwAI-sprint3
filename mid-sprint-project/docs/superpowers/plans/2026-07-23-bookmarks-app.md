@@ -121,13 +121,13 @@ git commit -m "Scaffold bookmarks app (Next.js, TypeScript, Tailwind)"
 **Interfaces:**
 - Produces: `createClient()` (browser, `lib/supabase/client.ts`) and `createClient()` (server, async, `lib/supabase/server.ts`) — later tasks import both by these exact names from these exact paths.
 
-- [ ] **Step 1: Create a new, separate Supabase project**
+- [x] **Step 1: Create a new, separate Supabase project**
 
 In the Supabase dashboard, create a **new** project (do not reuse `part1/`'s project) — e.g. named `bookmarks-app`. Note the Project URL and the publishable (anon) key from Project Settings > API.
 
 Under Authentication > Providers > Email, turn **off** "Confirm email" for this project. This is a course project, not production — disabling email confirmation lets Playwright sign up a throwaway test user per run without needing to read a real inbox. Note this as an intentional, documented simplification (not something to carry into a real production app).
 
-- [ ] **Step 2: Write `.env.local` and `.env.example`**
+- [x] **Step 2: Write `.env.local` and `.env.example`**
 
 `mid-sprint-project/.env.local` (git-ignored — never commit this file):
 
@@ -143,7 +143,7 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ```
 
-- [ ] **Step 2b: Confirm `.env.local` is actually git-ignored**
+- [x] **Step 2b: Confirm `.env.local` is actually git-ignored**
 
 ```bash
 git check-ignore -v mid-sprint-project/.env.local
@@ -151,13 +151,13 @@ git check-ignore -v mid-sprint-project/.env.local
 
 Expected: prints the `.gitignore` rule matching it. If it prints nothing, stop and fix `.gitignore` before continuing — do not proceed with an unignored secrets file.
 
-- [ ] **Step 3: Install the Supabase SSR package**
+- [x] **Step 3: Install the Supabase SSR package**
 
 ```bash
 cd mid-sprint-project && npm install @supabase/ssr @supabase/supabase-js
 ```
 
-- [ ] **Step 4: Browser client**
+- [x] **Step 4: Browser client**
 
 Create `mid-sprint-project/lib/supabase/client.ts`:
 
@@ -172,7 +172,7 @@ export function createClient() {
 }
 ```
 
-- [ ] **Step 5: Server client**
+- [x] **Step 5: Server client**
 
 Create `mid-sprint-project/lib/supabase/server.ts`:
 
@@ -207,7 +207,7 @@ export async function createClient() {
 }
 ```
 
-- [ ] **Step 6: Verify the connection**
+- [x] **Step 6: Verify the connection**
 
 Temporarily add this to `mid-sprint-project/app/page.tsx` (will be replaced in Task 3):
 
@@ -223,7 +223,7 @@ export default async function Home() {
 
 Run `npm run dev`, open `http://localhost:3000`. Expected: `{"hasSession": false, "error": null}` — no connection error. Revert this file's contents afterward (Task 3 replaces it properly).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add mid-sprint-project/lib mid-sprint-project/.env.example
@@ -248,7 +248,7 @@ git commit -m "Add Supabase client helpers and project config"
 - Consumes: `createClient()` from `@/lib/supabase/server` (Task 2).
 - Produces: `signUpAction`, `logInAction`, `logOutAction` (all `"use server"`, take `FormData`, from `@/app/auth/actions`) — Task 6 imports `logOutAction` for the real bookmarks page header.
 
-- [ ] **Step 1: Write the failing Playwright test first**
+- [x] **Step 1: Write the failing Playwright test first**
 
 Install Playwright (accept Chromium-only, default options):
 
@@ -287,7 +287,7 @@ test("sign up reaches bookmarks, log out blocks it, direct URL blocks it too", a
 });
 ```
 
-- [ ] **Step 2: Run it and confirm it fails for the right reason**
+- [x] **Step 2: Run it and confirm it fails for the right reason**
 
 ```bash
 npx playwright test tests/auth.spec.ts
@@ -295,7 +295,7 @@ npx playwright test tests/auth.spec.ts
 
 Expected: FAIL — `/signup` doesn't exist yet (404 or missing `Email` label), not a flaky/wrong-reason failure.
 
-- [ ] **Step 3: Write the auth Server Actions**
+- [x] **Step 3: Write the auth Server Actions**
 
 Create `mid-sprint-project/app/auth/actions.ts`:
 
@@ -330,7 +330,7 @@ export async function logOutAction() {
 }
 ```
 
-- [ ] **Step 4: Write the sign-up and log-in pages**
+- [x] **Step 4: Write the sign-up and log-in pages**
 
 Create `mid-sprint-project/app/signup/page.tsx`:
 
@@ -376,7 +376,7 @@ export default function LoginPage() {
 }
 ```
 
-- [ ] **Step 5: Root page redirects based on auth state**
+- [x] **Step 5: Root page redirects based on auth state**
 
 Replace `mid-sprint-project/app/page.tsx`:
 
@@ -391,7 +391,7 @@ export default async function RootPage() {
 }
 ```
 
-- [ ] **Step 6: Stub bookmarks page (gated, server-verified)**
+- [x] **Step 6: Stub bookmarks page (gated, server-verified)**
 
 Create `mid-sprint-project/app/bookmarks/page.tsx`:
 
@@ -419,7 +419,7 @@ export default async function BookmarksPage() {
 }
 ```
 
-- [ ] **Step 7: Middleware — server-side route protection**
+- [x] **Step 7: Middleware — server-side route protection**
 
 Create `mid-sprint-project/middleware.ts`:
 
@@ -465,7 +465,7 @@ export const config = {
 };
 ```
 
-- [ ] **Step 8: Run the test again and confirm it passes**
+- [x] **Step 8: Run the test again and confirm it passes**
 
 ```bash
 npx playwright test tests/auth.spec.ts
@@ -473,7 +473,7 @@ npx playwright test tests/auth.spec.ts
 
 Expected: PASS.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add mid-sprint-project/app mid-sprint-project/middleware.ts mid-sprint-project/tests mid-sprint-project/playwright.config.ts
@@ -489,7 +489,7 @@ Deploying now, right after the auth slice (before the real bookmarks feature exi
 **Files:**
 - No new app files. Vercel project linking creates `mid-sprint-project/.vercel/` locally (git-ignored by default).
 
-- [ ] **Step 1: Link and deploy**
+- [x] **Step 1: Link and deploy**
 
 ```bash
 cd mid-sprint-project
@@ -501,7 +501,7 @@ vercel --prod
 
 When prompted for each env var's value, paste the same values from `.env.local`. Do **not** add a service-role key to any Vercel env var at any scope.
 
-- [ ] **Step 2: Verify as a brand-new incognito visitor**
+- [x] **Step 2: Verify as a brand-new incognito visitor**
 
 Open the deployed URL in an incognito window:
 - Confirm it redirects to `/login` (no session).
@@ -510,7 +510,7 @@ Open the deployed URL in an incognito window:
 - Log out, confirm redirect to `/login`.
 - Navigate directly to `<live-url>/bookmarks` while signed out — confirm redirect to `/login`, not the page content.
 
-- [ ] **Step 3: Record the live URL**
+- [x] **Step 3: Record the live URL**
 
 Add to `mid-sprint-project/README.md` (create it):
 
@@ -524,7 +524,7 @@ manager. See `docs/superpowers/plans/2026-07-23-bookmarks-app.md` for the
 build plan.
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add mid-sprint-project/README.md
@@ -541,7 +541,7 @@ git commit -m "Add live Vercel URL to README"
 **Interfaces:**
 - Produces: table `public.bookmarks(id uuid, user_id uuid, url text, title text, created_at timestamptz)` — Task 6's `db.ts` queries this exact shape.
 
-- [ ] **Step 1: Initialize the Supabase CLI project and link it**
+- [x] **Step 1: Initialize the Supabase CLI project and link it**
 
 ```bash
 cd mid-sprint-project
@@ -552,7 +552,7 @@ npx supabase link --project-ref <your-project-ref>
 
 (`<your-project-ref>` is in the Supabase dashboard URL for the project created in Task 2.)
 
-- [ ] **Step 2: Create the migration file**
+- [x] **Step 2: Create the migration file**
 
 ```bash
 npx supabase migration new create_bookmarks
@@ -589,17 +589,17 @@ create policy "bookmarks_delete_own" on public.bookmarks
 
 `user_id` defaults to `auth.uid()`, so the app never sets it explicitly (same pattern as `part1/`'s trigger-based approach, done here via a column default instead since there's only one table). The `with check` on insert still guards against a caller trying to pass a different `user_id` explicitly.
 
-- [ ] **Step 3: Apply the migration**
+- [x] **Step 3: Apply the migration**
 
 ```bash
 npx supabase db push
 ```
 
-- [ ] **Step 4: Verify in the dashboard**
+- [x] **Step 4: Verify in the dashboard**
 
 In the Supabase dashboard, go to Authentication > Policies (or Table Editor > `bookmarks` > RLS). Confirm: RLS is enabled, and three policies exist (`bookmarks_select_own`, `bookmarks_insert_own`, `bookmarks_delete_own`), each scoped to `authenticated` and using `auth.uid() = user_id`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add mid-sprint-project/supabase
@@ -620,7 +620,7 @@ git commit -m "Add bookmarks table migration with owner-scoped RLS"
 - Consumes: `createClient()` from `@/lib/supabase/server` (Task 2); `bookmarks` table from Task 5.
 - Produces: `type Bookmark = { id: string; url: string; title: string; created_at: string }`, `listBookmarks(): Promise<Bookmark[]>`, `createBookmark(url: string, title: string): Promise<Bookmark>` (both from `@/app/lib/db`) — Task 7 imports `Bookmark` and adds `deleteBookmark` to this same file.
 
-- [ ] **Step 1: Write the failing Playwright test first**
+- [x] **Step 1: Write the failing Playwright test first**
 
 Create `mid-sprint-project/tests/create-bookmark.spec.ts`:
 
@@ -650,7 +650,7 @@ test("create a bookmark and confirm it survives a reload", async ({ page }) => {
 });
 ```
 
-- [ ] **Step 2: Run it and confirm it fails for the right reason**
+- [x] **Step 2: Run it and confirm it fails for the right reason**
 
 ```bash
 npx playwright test tests/create-bookmark.spec.ts
@@ -658,7 +658,7 @@ npx playwright test tests/create-bookmark.spec.ts
 
 Expected: FAIL — no `Title`/`URL`/`Save` controls exist on `/bookmarks` yet.
 
-- [ ] **Step 3: Write `app/lib/db.ts`**
+- [x] **Step 3: Write `app/lib/db.ts`**
 
 Create `mid-sprint-project/app/lib/db.ts`:
 
@@ -694,7 +694,7 @@ export async function createBookmark(url: string, title: string): Promise<Bookma
 }
 ```
 
-- [ ] **Step 4: Write the create Server Action**
+- [x] **Step 4: Write the create Server Action**
 
 Create `mid-sprint-project/app/bookmarks/actions.ts`:
 
@@ -720,7 +720,7 @@ export async function createBookmarkAction(formData: FormData) {
 }
 ```
 
-- [ ] **Step 5: Wire the real bookmarks page**
+- [x] **Step 5: Wire the real bookmarks page**
 
 Replace `mid-sprint-project/app/bookmarks/page.tsx`:
 
@@ -767,7 +767,7 @@ export default async function BookmarksPage() {
 }
 ```
 
-- [ ] **Step 6: Run the test again and confirm it passes**
+- [x] **Step 6: Run the test again and confirm it passes**
 
 ```bash
 npx playwright test tests/create-bookmark.spec.ts
@@ -775,7 +775,7 @@ npx playwright test tests/create-bookmark.spec.ts
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add mid-sprint-project/app/lib mid-sprint-project/app/bookmarks mid-sprint-project/tests/create-bookmark.spec.ts
@@ -796,7 +796,7 @@ git commit -m "Add save and list bookmarks"
 - Consumes: `Bookmark`, `listBookmarks`, `createBookmark` from `@/app/lib/db` (Task 6).
 - Produces: `deleteBookmark(id: string): Promise<void>` (from `@/app/lib/db`), `deleteBookmarkAction` (from `@/app/bookmarks/actions`).
 
-- [ ] **Step 1: Write the failing Playwright test first**
+- [x] **Step 1: Write the failing Playwright test first**
 
 Create `mid-sprint-project/tests/delete-bookmark.spec.ts`:
 
@@ -828,7 +828,7 @@ test("delete a bookmark and confirm it's gone after a reload", async ({ page }) 
 });
 ```
 
-- [ ] **Step 2: Run it and confirm it fails for the right reason**
+- [x] **Step 2: Run it and confirm it fails for the right reason**
 
 ```bash
 npx playwright test tests/delete-bookmark.spec.ts
@@ -836,7 +836,7 @@ npx playwright test tests/delete-bookmark.spec.ts
 
 Expected: FAIL — no delete button exists yet.
 
-- [ ] **Step 3: Add `deleteBookmark` to `db.ts`**
+- [x] **Step 3: Add `deleteBookmark` to `db.ts`**
 
 Append to `mid-sprint-project/app/lib/db.ts`:
 
@@ -848,7 +848,7 @@ export async function deleteBookmark(id: string): Promise<void> {
 }
 ```
 
-- [ ] **Step 4: Add the delete Server Action**
+- [x] **Step 4: Add the delete Server Action**
 
 Append to `mid-sprint-project/app/bookmarks/actions.ts`:
 
@@ -868,7 +868,7 @@ export async function deleteBookmarkAction(formData: FormData) {
 
 (Add `deleteBookmark` to the existing `import { createBookmark } from "@/app/lib/db";` line so it reads `import { createBookmark, deleteBookmark } from "@/app/lib/db";`.)
 
-- [ ] **Step 5: Add the delete button to the list**
+- [x] **Step 5: Add the delete button to the list**
 
 In `mid-sprint-project/app/bookmarks/page.tsx`, update the import line to `import { createBookmarkAction, deleteBookmarkAction } from "./actions";` and replace the `<ul>` block:
 
@@ -888,7 +888,7 @@ In `mid-sprint-project/app/bookmarks/page.tsx`, update the import line to `impor
       </ul>
 ```
 
-- [ ] **Step 6: Run the test again and confirm it passes**
+- [x] **Step 6: Run the test again and confirm it passes**
 
 ```bash
 npx playwright test tests/delete-bookmark.spec.ts
@@ -902,7 +902,7 @@ npx playwright test
 
 Expected: all 3 tests pass (`auth.spec.ts`, `create-bookmark.spec.ts`, `delete-bookmark.spec.ts`).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add mid-sprint-project/app/lib mid-sprint-project/app/bookmarks mid-sprint-project/tests/delete-bookmark.spec.ts
@@ -916,13 +916,13 @@ git commit -m "Add delete bookmark"
 **Files:**
 - No new files.
 
-- [ ] **Step 1: Redeploy**
+- [x] **Step 1: Redeploy**
 
 ```bash
 cd mid-sprint-project && vercel --prod
 ```
 
-- [ ] **Step 2: Full incognito walkthrough**
+- [x] **Step 2: Full incognito walkthrough**
 
 Open the live URL in a fresh incognito window:
 - Confirm it redirects to `/login` when signed out.
@@ -931,11 +931,11 @@ Open the live URL in a fresh incognito window:
 - Delete it, confirm it disappears; reload, confirm it's still gone.
 - Log out, confirm `/bookmarks` redirects to `/login` again when visited directly.
 
-- [ ] **Step 3: Update the README**
+- [x] **Step 3: Update the README**
 
 Confirm `mid-sprint-project/README.md`'s live URL is current (update if the domain changed).
 
-- [ ] **Step 4: Commit (only if the README changed)**
+- [x] **Step 4: Commit (only if the README changed)**
 
 ```bash
 git add mid-sprint-project/README.md
@@ -952,7 +952,7 @@ git commit -m "Confirm live deployment after delete feature"
 - Modify: `.claude/commands/security-scan.md`
 - Modify: `.claude/agents/vercel-security-scanner.md`
 
-- [ ] **Step 1: Make the command accept a target directory**
+- [x] **Step 1: Make the command accept a target directory**
 
 In `.claude/commands/security-scan.md`, replace:
 
@@ -993,7 +993,7 @@ it. Otherwise ask which app to scan (this repo currently has `part1/` and
      security headers, signs of a leaked secret)
 ```
 
-- [ ] **Step 2: Update the fallback note in `vercel-security-scanner.md`**
+- [x] **Step 2: Update the fallback note in `vercel-security-scanner.md`**
 
 In `.claude/agents/vercel-security-scanner.md`, replace:
 
@@ -1010,7 +1010,7 @@ repo currently has `part1/` and `mid-sprint-project/`) and report findings
 grouped by severity: critical,
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add .claude/commands/security-scan.md .claude/agents/vercel-security-scanner.md
@@ -1021,7 +1021,7 @@ git commit -m "Make /security-scan target-directory aware (repo now has two apps
 
 ## Task 10: Run the security scan and fix findings
 
-- [ ] **Step 1: Run the full scan against this app**
+- [x] **Step 1: Run the full scan against this app**
 
 In Claude Code, run:
 
@@ -1031,7 +1031,7 @@ In Claude Code, run:
 
 (Or run `/security-scan` and answer `mid-sprint-project/` when asked which app.)
 
-- [ ] **Step 2: Fix every critical and high finding**
+- [x] **Step 2: Fix every critical and high finding**
 
 Work through the combined report from critical to high. Common things this specific app could plausibly be flagged for, given the plan above — verify each is actually clean, don't assume:
 - `middleware.ts` matcher only covering `/bookmarks/:path*` — confirm no other route needs gating (there isn't one in this scope).
@@ -1039,7 +1039,7 @@ Work through the combined report from critical to high. Common things this speci
 - No `SECURITY DEFINER` view or RPC exists (none was created in this plan — confirm the scanner agrees).
 - `.env.local` never appears in `git log -p -- '**/.env*'` for this project's commits.
 
-- [ ] **Step 3: Commit any fixes**
+- [x] **Step 3: Commit any fixes**
 
 ```bash
 git add -A
