@@ -22,9 +22,9 @@ export default async function BookmarksPage() {
 
       <form action={createBookmarkAction} className="flex gap-2 mb-6">
         <label htmlFor="title" className="sr-only">Title</label>
-        <input id="title" name="title" placeholder="Title" required className="border rounded p-2 flex-1" />
+        <input id="title" name="title" placeholder="Title" required maxLength={200} className="border rounded p-2 flex-1" />
         <label htmlFor="url" className="sr-only">URL</label>
-        <input id="url" name="url" type="url" placeholder="https://example.com" required className="border rounded p-2 flex-1" />
+        <input id="url" name="url" type="url" placeholder="https://example.com" required maxLength={2048} className="border rounded p-2 flex-1" />
         <button type="submit" className="border rounded p-2">Save</button>
       </form>
 
