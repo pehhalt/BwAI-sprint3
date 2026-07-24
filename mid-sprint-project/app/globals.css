@@ -3,6 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --border: #3f3f46;
+  --muted-foreground: #737373;
 }
 
 @theme inline {
@@ -16,7 +18,13 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --border: #a1a1aa;
+    --muted-foreground: #a3a3a3;
   }
+}
+
+html {
+  scrollbar-gutter: stable;
 }
 
 body {
