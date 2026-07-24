@@ -83,6 +83,20 @@ findings** — see `REFLECTION.md` for the full list and independent
 re-verification of RLS, ownership checks, live security headers, and
 Vercel deployment protection.
 
+## Vercel Deployment Protection
+
+Confirmed on — checked directly against the Vercel API (`GET
+/v9/projects/{id}`), not just inferred from a redirect: `ssoProtection.
+deploymentType` is `all_except_custom_domains`. That means Vercel
+Authentication (SSO) gates every deployment URL — production-deployment
+URLs, preview deployments, everything — except the actual custom
+domain/alias (`mid-sprint-project.vercel.app`), which is intentionally
+left public so real users can reach the live app. No `trustedIps`
+allowlist or `protectionBypass` token is configured to weaken it. This
+already covers the optional "Deployment Protection on preview URLs" task —
+there's no separate per-environment toggle to also enable, since this one
+setting already applies uniformly across all deployment types.
+
 ## Key decisions already made (don't re-litigate these)
 
 - **Folder location:** this repo, new top-level `mid-sprint-project/` folder
