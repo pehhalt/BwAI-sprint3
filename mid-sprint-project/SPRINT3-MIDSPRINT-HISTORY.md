@@ -206,3 +206,64 @@ Task 11 (fresh-context rescan + `REFLECTION.md`) is the only remaining
 step — it must run in a genuinely new Claude Code session per the plan's
 explicit warning, so it could not be completed in the same session as the
 fixes above.
+
+## Follow-up session: more features, a same-session rescan (not Task 11), and UI polish
+
+A later session (still not the fresh-context rescan required by Task 11)
+made three more rounds of changes, all committed to `main`:
+
+- **`cf4f30a` — rate limiting extended to bookmark actions.** The
+  `checkRateLimit` helper from `app/auth/actions.ts` was extracted into a
+  shared `app/lib/rate-limit.ts` (now parameterized by
+  `maxAttempts`/`windowMs` instead of hardcoded module constants) and
+  applied to `createBookmarkAction`/`deleteBookmarkAction`, keyed by
+  `bookmark:${user.id}` at 20 attempts/60s combined. Requested because the
+  original Task 10 scan only rate-limited signup/login, not the
+  bookmark-mutating actions.
+- **A same-session `/security-scan` re-run** (explicitly *not* a
+  substitute for Task 11 — see the warning below) was run after the rate
+  limiting change, plus after redeploying to confirm the Task 10 header
+  fix had actually gone live (it hadn't: `next.config.ts`'s `headers()`
+  predated the two live Vercel deployments, so the fix existed in the repo
+  but was never actually serving until a fresh `vercel --prod` deploy).
+  This rescan found:
+  - Medium: CSP `script-src` allows `'unsafe-inline'` (no nonce/hash
+    scheme); Vercel env vars not marked "Sensitive" (later found to be a
+    Vercel platform limitation for the Development environment, not a
+    real gap — Production/Preview already were).
+  - Low: caret-pinned Supabase package versions; the rate limiter's
+    documented per-instance limitation; no length/format validation on
+    bookmark `title`/`url`/`id`; no `Referrer-Policy`/`Permissions-Policy`
+    headers; Preview-deployment protection still unverified (no Preview
+    deployment exists to test against).
+  - **`090039e` — fixes for the above:** `Referrer-Policy` and
+    `Permissions-Policy` headers added to `next.config.ts`; max-length
+    checks on bookmark `title`/`url` and a UUID-format check on `id`
+    before it reaches `deleteBookmark`, plus matching `maxLength`
+    attributes on the form inputs. The CSP `unsafe-inline` and in-memory
+    rate-limiter findings were deliberately left as-is (documented
+    trade-offs, not gaps — see the scan discussion for why).
+- **`71cdbce` — UI restyle (not a security change).** Bookmarks list
+  changed from a `<ul>` to a table, inside a single card frame wrapping
+  the title/description/form/table (was previously only around the form,
+  which visibly overflowed under long URLs — fixed with `min-w-0` on the
+  flex inputs); bookmark links show the full URL via a native
+  `title`-attribute tooltip; login/signup pages got a title, short
+  description, and a matching card frame, sized to a fixed, equal width
+  (`w-[26rem]`) so switching between them doesn't shift the layout, wide
+  enough for the longer description to stay on one line.
+  `next.config.ts`'s CSP was also changed to allow `'unsafe-eval'` in
+  `script-src` only when `NODE_ENV !== "production"`, clearing a
+  React dev-mode console error (`eval() is not supported...`) without
+  weakening the strict production CSP.
+
+**Why none of this satisfies Task 11:** the plan's own warning is explicit
+— the rescan "must run in a genuinely new Claude Code session... An agent
+that carried the first conversation tends to confirm its own prior work
+rather than re-examine the files." The re-run described above happened in
+the same session that had just made the rate-limiting change, and the
+session then went on to make *more* changes (`090039e`, `71cdbce`)
+afterward — so even setting the same-session issue aside, that scan is
+now stale against the current code. **Task 11 is still open.** A real
+fresh-context rescan still needs to run, covering everything through
+`71cdbce`, in a session that has done nothing else first.

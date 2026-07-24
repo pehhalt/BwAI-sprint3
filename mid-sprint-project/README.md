@@ -2,8 +2,9 @@
 
 Live URL: https://mid-sprint-project.vercel.app
 
-Status: **built, deployed, and security-hardened. One step left: the
-fresh-context security rescan (Task 11).**
+Status: **built, deployed, and security-hardened across two scan passes.
+One step left: the fresh-context security rescan (Task 11) — see below,
+still genuinely pending.**
 
 This is the course's mid-sprint deliverable ("Ship a Secured App and Prove
 It") — a small, provably secure, multi-user web app, built and deployed
@@ -32,10 +33,14 @@ check), including by typing the URL directly. The `bookmarks` table has RLS
 enabled with an owner-scoped policy per operation, plus explicit
 application-level `user_id` scoping in `app/lib/db.ts` as defense-in-depth
 on top of RLS. Security headers (CSP, `X-Frame-Options`,
-`X-Content-Type-Options`) are set on every route, bookmark URLs are
-scheme-validated (`http`/`https` only) before saving, signup errors are
-generalized to avoid email enumeration, and login/signup carry a
-best-effort in-process rate limit.
+`X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`) are set
+on every route, bookmark URLs are scheme-validated (`http`/`https` only)
+and length-checked before saving, signup errors are generalized to avoid
+email enumeration, and login/signup **and** bookmark create/delete all
+carry a best-effort in-process rate limit (shared implementation in
+`app/lib/rate-limit.ts`). The bookmarks list is a table with a native
+`title`-attribute tooltip showing the full URL; login/signup/bookmarks
+pages all sit inside a bordered card frame.
 
 ## Where everything is
 
@@ -62,18 +67,21 @@ best-effort in-process rate limit.
 
 ## What's left: Task 11 (fresh-context rescan)
 
-Everything through Task 10 is done and committed on `main`: the app is
-live, fully featured within scope, and a full `/security-scan` pass found
-zero criticals, fixed both High findings and all four Medium findings (see
-`SPRINT3-MIDSPRINT-HISTORY.md` for the detailed list). Five Low findings
-were deliberately deferred as inert/informational.
+Everything through Task 10 is done and committed on `main`, and a second
+round of work in a later session added bookmark-action rate limiting, ran
+a second full `/security-scan`, fixed what it found (missing headers,
+input validation), and did a UI restyle — see `SPRINT3-MIDSPRINT-HISTORY.md`
+for the detailed list of both scan passes and every fix commit.
 
-What remains is the plan's own hard requirement: the rescan that confirms
-those fixes must run in a **genuinely new Claude Code session** — not a
-`/clear` in the same terminal, not a continuation of the session that made
-the fixes. To finish:
+**Neither scan satisfies Task 11.** The plan's hard requirement is that the
+rescan confirming all fixes runs in a **genuinely new Claude Code
+session** — not a `/clear` in the same terminal, not a continuation of the
+session that made the fixes. The second scan above was run in the same
+session as the fixes it checked, and more commits landed after it, so it's
+both same-session *and* now stale. To actually finish:
 
-1. Open a new Claude Code session in this repo (or in `mid-sprint-project/`).
+1. Open a new Claude Code session in this repo (or in `mid-sprint-project/`)
+   that has not made any fixes itself.
 2. Run `/security-scan mid-sprint-project/` (or `/security-scan` and answer
    `mid-sprint-project/` when asked which app).
 3. If it comes back clean (zero critical/high), fill in `REFLECTION.md`'s
