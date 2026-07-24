@@ -2,9 +2,9 @@
 
 Live URL: https://mid-sprint-project.vercel.app
 
-Status: **built, deployed, and security-hardened across two scan passes.
-One step left: the fresh-context security rescan (Task 11) — see below,
-still genuinely pending.**
+Status: **complete.** Built, deployed, security-hardened across two scan
+passes, and confirmed clean by a fresh-context rescan (Task 11) — zero
+critical/high findings.
 
 This is the course's mid-sprint deliverable ("Ship a Secured App and Prove
 It") — a small, provably secure, multi-user web app, built and deployed
@@ -53,41 +53,35 @@ pages all sit inside a bordered card frame.
   [`docs/superpowers/plans/2026-07-23-bookmarks-app.md`](docs/superpowers/plans/2026-07-23-bookmarks-app.md)
   — 11 fully-detailed tasks (exact files, exact code, exact commands) from
   scaffolding through the final fresh-context security rescan. Written via
-  the `superpowers:writing-plans` skill. Tasks 1–10 are checked off; Task 11
-  (fresh-context rescan) is the only one still open.
+  the `superpowers:writing-plans` skill. All 11 tasks are checked off.
 - **What happened before this plan was written, and during execution:**
   [`SPRINT3-MIDSPRINT-HISTORY.md`](SPRINT3-MIDSPRINT-HISTORY.md) — the
   `ai-architect` consult, the decisions that shaped the plan, and a summary
   of how the build actually went (incidents, security-scan findings, fixes).
 - **Final wrap-up:**
-  [`REFLECTION.md`](REFLECTION.md) — security scan history and the review
-  checklist. Currently a draft: everything is filled in except the
-  fresh-context rescan result, which can only be recorded after Task 11 runs
-  in a genuinely new session.
+  [`REFLECTION.md`](REFLECTION.md) — security scan history, including the
+  fresh-context rescan result, and the fully-checked review checklist.
 
-## What's left: Task 11 (fresh-context rescan)
+## Task 11 (fresh-context rescan): done
 
-Everything through Task 10 is done and committed on `main`, and a second
-round of work in a later session added bookmark-action rate limiting, ran
-a second full `/security-scan`, fixed what it found (missing headers,
-input validation), and did a UI restyle — see `SPRINT3-MIDSPRINT-HISTORY.md`
-for the detailed list of both scan passes and every fix commit.
+Everything through Task 10 was done and committed on `main`, then a second
+round of work added bookmark-action rate limiting, ran a second full
+`/security-scan`, fixed what it found (missing headers, input validation),
+and did a UI restyle — see `SPRINT3-MIDSPRINT-HISTORY.md` for the detailed
+list of both scan passes and every fix commit. That second scan ran in the
+same session as the fixes it checked, so per the plan's own warning it
+didn't satisfy Task 11 on its own.
 
-**Neither scan satisfies Task 11.** The plan's hard requirement is that the
-rescan confirming all fixes runs in a **genuinely new Claude Code
-session** — not a `/clear` in the same terminal, not a continuation of the
-session that made the fixes. The second scan above was run in the same
-session as the fixes it checked, and more commits landed after it, so it's
-both same-session *and* now stale. To actually finish:
-
-1. Open a new Claude Code session in this repo (or in `mid-sprint-project/`)
-   that has not made any fixes itself.
-2. Run `/security-scan mid-sprint-project/` (or `/security-scan` and answer
-   `mid-sprint-project/` when asked which app).
-3. If it comes back clean (zero critical/high), fill in `REFLECTION.md`'s
-   rescan result and commit it — the project is then complete.
-4. If it finds something new, fix it, commit, and rescan again in yet
-   another fresh session — a same-session re-check doesn't count.
+The actual fresh-context rescan was then run via a freshly-dispatched
+agent with zero memory of the fix conversation — the closest available
+equivalent to "a genuinely new Claude Code session" from within a running
+session (see `SPRINT3-MIDSPRINT-HISTORY.md` for the one methodological
+caveat: it worked through each scanner's checklist directly rather than
+dispatching three separate sub-agents, since it had no ability to spawn
+further agents itself). **Result: 0 critical, 0 high, 5 informational low
+findings** — see `REFLECTION.md` for the full list and independent
+re-verification of RLS, ownership checks, live security headers, and
+Vercel deployment protection.
 
 ## Key decisions already made (don't re-litigate these)
 

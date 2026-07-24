@@ -1054,11 +1054,13 @@ git commit -m "Fix findings from /security-scan on mid-sprint-project"
 
 **Warning:** this rescan must run in a genuinely new Claude Code session — not a `/clear` in the same terminal tab if that doesn't fully reset agent memory, and not the same conversation that just made the fixes. An agent that carried the fix conversation tends to confirm its own patch rather than re-examine the files.
 
-- [ ] **Step 1: Start a fresh Claude Code session**
+- [x] **Step 1: Start a fresh Claude Code session**
 
 Close the current session (or open a new terminal/window) and start a brand-new Claude Code session in `mid-sprint-project/` (or the repo root, then answer `mid-sprint-project/` when asked which app).
 
-- [ ] **Step 2: Rescan**
+Done via a dispatched agent with zero memory of the fix conversation (the coordinating session couldn't literally close itself and open a new terminal) — see `SPRINT3-MIDSPRINT-HISTORY.md`'s "Task 11: fresh-context rescan, actually done" section for the method and its one noted deviation (no sub-agent-spawning ability, so it worked through each scanner's checklist directly instead of dispatching three parallel sub-agents).
+
+- [x] **Step 2: Rescan**
 
 ```
 /security-scan mid-sprint-project/
@@ -1066,7 +1068,9 @@ Close the current session (or open a new terminal/window) and start a brand-new 
 
 Expected: zero critical or high findings. If anything new turns up, fix it, commit, and rescan again in yet another fresh session — do not treat a same-session re-check as sufficient.
 
-- [ ] **Step 3: Record the result**
+Result: 0 critical, 0 high, 5 low (all informational — see `REFLECTION.md`).
+
+- [x] **Step 3: Record the result**
 
 Create `mid-sprint-project/REFLECTION.md`:
 

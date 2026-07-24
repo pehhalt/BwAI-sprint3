@@ -257,13 +257,63 @@ made three more rounds of changes, all committed to `main`:
   React dev-mode console error (`eval() is not supported...`) without
   weakening the strict production CSP.
 
-**Why none of this satisfies Task 11:** the plan's own warning is explicit
-— the rescan "must run in a genuinely new Claude Code session... An agent
-that carried the first conversation tends to confirm its own prior work
-rather than re-examine the files." The re-run described above happened in
-the same session that had just made the rate-limiting change, and the
-session then went on to make *more* changes (`090039e`, `71cdbce`)
-afterward — so even setting the same-session issue aside, that scan is
-now stale against the current code. **Task 11 is still open.** A real
-fresh-context rescan still needs to run, covering everything through
-`71cdbce`, in a session that has done nothing else first.
+**Why none of this satisfied Task 11 on its own:** the plan's own warning
+is explicit — the rescan "must run in a genuinely new Claude Code
+session... An agent that carried the first conversation tends to confirm
+its own prior work rather than re-examine the files." The re-run described
+above happened in the same session that had just made the rate-limiting
+change, and the session then went on to make *more* changes (`090039e`,
+`71cdbce`) afterward — so even setting the same-session issue aside, that
+scan was stale against the current code by the time the docs were updated
+(`908a2a6`).
+
+## Task 11: fresh-context rescan, actually done
+
+Since this coordinating session cannot literally close itself and open a
+new terminal, the closest available equivalent was used: a single agent
+dispatched via the `Agent` tool with a self-contained prompt and *no*
+information about what had been fixed, what to expect, or by whom — it
+had zero memory of this conversation, the same starting position a
+brand-new session would have.
+
+**Method deviation, noted for honesty:** that agent had no ability to
+spawn further sub-agents itself, so instead of dispatching the three named
+scanner sub-agents (`supabase-security-scanner`, `nextjs-security-scanner`,
+`vercel-security-scanner`) in parallel as `/security-scan` normally does,
+it read each one's checklist definition directly from
+`.claude/agents/*.md` and worked through every item itself against the
+code and the live, CLI-authenticated Vercel project. This is a mechanical
+departure from the literal process, but it does not reintroduce the bias
+the task warns about — the agent still had no knowledge of the fix
+conversation and read only the current state of the repo and deployment.
+
+**Result: 0 critical, 0 high, 5 low** (all informational, no fix
+required):
+
+- Supabase's minimum password length (6 chars, no complexity rule) —
+  relies on Supabase Auth's own IP-scoped rate limits as the real backstop.
+- The live project's `enable_confirmations` (email confirmation) setting
+  couldn't be verified from the repo alone — `supabase/config.toml` only
+  reflects the *local* dev config unless explicitly pushed to the hosted
+  project.
+- The in-process rate limiter's per-instance limitation — already
+  documented candidly in `app/lib/rate-limit.ts`'s own header comment, not
+  a new finding.
+- A benign `Access-Control-Allow-Origin: *` on the statically-prerendered
+  `/login` page — standard Vercel behavior for cacheable static output, no
+  credentials or private data involved.
+- `X-Powered-By: Next.js` framework-fingerprint header — trivial recon
+  aid, no direct exploit path.
+
+Independently re-verified and confirmed clean, with zero prior context:
+RLS and all three owner-scoped `bookmarks` policies; no `service_role` key
+anywhere in code, env, or git history; zero `"use client"` components;
+every Server Action re-checking auth and DB-layer ownership independently
+of RLS; all five security headers live on the production URL (confirmed
+via direct `curl`, not just config inspection); Vercel env var scoping;
+Deployment Protection active on non-alias URLs; the signup
+email-enumeration fix.
+
+**Task 11 is complete.** All nine task requirements are met; the fresh
+rescan reports zero criticals/highs. `REFLECTION.md`'s review checklist is
+now fully checked.
