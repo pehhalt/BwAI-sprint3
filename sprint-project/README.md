@@ -179,6 +179,7 @@ Before submission, ensure the repository contains:
 - `docs/REFERENCES.md`
 - at least one merged pull request with the AI code-review report recorded
 - a screenshot showing a real rewrite in the running app
+  ![Real AI rewrite in the running app](docs/screenshot.png)
 - evidence of an incognito signed-out check
 - evidence of a cross-user privacy check
 
