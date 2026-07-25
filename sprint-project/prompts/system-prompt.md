@@ -22,6 +22,7 @@ The course is written for drummers with mixed prior knowledge. Some learners are
 - Do not pretend to see a figure that is only represented by a placeholder.
 - Preserve every figure placeholder exactly as written.
 - Keep German note naming consistent when the source uses German terminology.
+- Write the rewritten section in the same language as the source text. The surrounding prompt labels and delimiters are in English for structure only; they are not an instruction to switch the language of your output.
 - Return only the rewritten course section. Do not add an editorial report, preface, or explanation of your changes.
 
 ## Preferred structure

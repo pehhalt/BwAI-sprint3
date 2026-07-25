@@ -122,3 +122,53 @@ back up the docs, scaffold, delete `project-idea/`, restore the docs).
 
 Next step: choose an execution approach (subagent-driven-development or
 executing-plans) and begin Task 1.
+
+## Task 19: Tuned system-prompt persona iteration pass
+
+Ran 3 real, non-trivial German excerpts against `prompts/system-prompt.md`
+via a direct OpenRouter call (real `anthropic/claude-sonnet-4.5`, not
+`E2E_TEST_MODE`) using the same prompt-construction logic as
+`lib/openrouter.ts`/`lib/prompt.ts`: (A) the major scale
+(Dur-Tonleiter, with a `[FIGURE: ...]` placeholder and an informal
+"sounds brighter/happier" aside), (B) time signatures and syncopation
+(Taktarten, with a `[FIGURE: ...]` placeholder), (C) triad construction
+(Dreiklaenge, deliberately containing a "Dur klingt froehlich, Moll
+klingt traurig" folk claim and an overgeneralized "root is always the
+lowest note" imprecision).
+
+Checked each tuned output against the system prompt's own "Required
+behavior" list. Findings: the tuned persona correctly explained concepts
+before naming them, preserved both `[FIGURE: ...]` placeholders
+byte-for-byte, did not invent notation/citations, and — most notably for
+excerpt C — explicitly separated the Dur/Moll interval definition from
+its emotional connotation ("these associations depend on style, culture,
+and usage") and corrected the root-note overgeneralization, neither of
+which a generic-assistant baseline (same source text, plain "explain this
+text more clearly" prompt, no system prompt, run separately) did — the
+baseline stated "Major = happy/bright... a useful rule of thumb everyone
+can remember" and "the root note is always the lowest note... that's just
+how it works" as flat fact.
+
+One real defect surfaced: the tuned rewrite for excerpt C came back
+**entirely in English** despite the German source and an explicit
+German-note-naming project instruction, while A and B in the same batch
+stayed correctly in German. Root cause: the system prompt had a rule
+about keeping German *note naming* but no rule requiring the *output
+language* to match the *source language*, and the prompt's English
+section-header scaffolding (`## Source section to rewrite`, etc.)
+occasionally pulled the whole response into English.
+
+**Change made**: added one line to `prompts/system-prompt.md`'s Required
+behavior list:
+
+> Write the rewritten section in the same language as the source text.
+> The surrounding prompt labels and delimiters are in English for
+> structure only; they are not an instruction to switch the language of
+> your output.
+
+Re-verified with 5 further live calls: 3 reruns of excerpt C (all
+returned fully in German with correct definitions) and 1 rerun each of A
+and B as a regression check (both remained correct, in German, with
+figure placeholders intact and no editorial preface). Full transcripts
+and the rule-by-rule comparison table are in
+`.superpowers/sdd/task-19-report.md`.
