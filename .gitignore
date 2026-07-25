@@ -52,3 +52,7 @@ next-env.d.ts
 # `npx skills add supabase/agent-skills` after a fresh clone.
 .claude/skills/supabase
 .claude/skills/supabase-postgres-best-practices
+
+# superpowers subagent-driven-development scratch state (progress ledger,
+# task briefs/reports, review packages) - not meant to be committed
+.superpowers/
