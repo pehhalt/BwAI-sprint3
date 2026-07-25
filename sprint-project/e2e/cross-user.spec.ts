@@ -30,5 +30,8 @@ test("user B cannot access user A's project", async ({ page }) => {
   await expect(page.getByText(/this page could not be found/i)).toBeVisible();
 
   await page.goto("/dashboard");
+  await expect(
+    page.getByRole("heading", { name: "Your projects" }),
+  ).toBeVisible();
   await expect(page.getByText(projectTitle)).not.toBeVisible();
 });
