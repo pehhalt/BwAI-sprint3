@@ -35,7 +35,7 @@ export default async function SectionPage({
   const latestVersion = versions[0] ?? null;
 
   return (
-    <main className="mx-auto max-w-6xl p-6">
+    <main className="mx-auto w-full max-w-[1800px] p-6">
       <h1 className="text-2xl font-semibold">{section.title}</h1>
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <SourceEditor projectId={projectId} section={section} />

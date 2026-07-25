@@ -79,7 +79,7 @@ export function RewriteEditor({
           <textarea
             name="rewritten_text"
             defaultValue={latestVersion.rewritten_text}
-            rows={16}
+            rows={30}
             className="w-full rounded border border-gray-300 p-2 text-sm"
           />
           <div className="flex items-center gap-3">
