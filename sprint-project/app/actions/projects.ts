@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { projectInputSchema } from "@/lib/validation";
 
-type ActionResult = { error?: string };
+type ActionResult = { error?: string; success?: boolean };
 
 export async function createProject(formData: FormData): Promise<ActionResult | void> {
   const supabase = await createClient();
@@ -69,4 +69,21 @@ export async function updateProjectSettings(
 
   revalidatePath(`/projects/${projectId}/settings`);
   revalidatePath(`/projects/${projectId}`);
+}
+
+export async function deleteProject(projectId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { error } = await supabase.from("projects").delete().eq("id", projectId);
+
+  if (error) {
+    return { error: "Could not delete project." };
+  }
+
+  revalidatePath("/dashboard");
+  return { success: true };
 }
