@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SourceEditor } from "@/components/SourceEditor";
 import { RewriteEditor } from "@/components/RewriteEditor";
+import { VersionList } from "@/components/VersionList";
 import type { RewriteVersion, Section } from "@/lib/types";
 
 export default async function SectionPage({
@@ -38,7 +39,18 @@ export default async function SectionPage({
       <h1 className="text-2xl font-semibold">{section.title}</h1>
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <SourceEditor projectId={projectId} section={section} />
-        <RewriteEditor sectionId={sectionId} latestVersion={latestVersion} />
+        <RewriteEditor
+          projectId={projectId}
+          sectionId={sectionId}
+          latestVersion={latestVersion}
+        />
+      </div>
+      <div className="mt-8">
+        <VersionList
+          projectId={projectId}
+          sectionId={sectionId}
+          versions={versions}
+        />
       </div>
     </main>
   );
