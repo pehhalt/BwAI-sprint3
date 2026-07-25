@@ -74,7 +74,12 @@ export async function approveVersion(
     versionId
   );
 
-  for (const version of plan) {
+  const orderedPlan = [
+    ...plan.filter((version) => version.id !== versionId),
+    ...plan.filter((version) => version.id === versionId),
+  ];
+
+  for (const version of orderedPlan) {
     const { error } = await supabase
       .from("rewrite_versions")
       .update({ status: version.status })
