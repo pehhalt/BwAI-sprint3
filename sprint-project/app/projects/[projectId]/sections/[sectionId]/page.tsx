@@ -1,7 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SourceEditor } from "@/components/SourceEditor";
-import type { Section } from "@/lib/types";
+import { RewriteEditor } from "@/components/RewriteEditor";
+import type { RewriteVersion, Section } from "@/lib/types";
 
 export default async function SectionPage({
   params,
@@ -24,11 +25,20 @@ export default async function SectionPage({
   const section = data as Section | null;
   if (!section) notFound();
 
+  const { data: versionsData } = await supabase
+    .from("rewrite_versions")
+    .select("*")
+    .eq("section_id", sectionId)
+    .order("created_at", { ascending: false });
+  const versions = (versionsData ?? []) as RewriteVersion[];
+  const latestVersion = versions[0] ?? null;
+
   return (
     <main className="mx-auto max-w-6xl p-6">
       <h1 className="text-2xl font-semibold">{section.title}</h1>
-      <div className="mt-6">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <SourceEditor projectId={projectId} section={section} />
+        <RewriteEditor sectionId={sectionId} latestVersion={latestVersion} />
       </div>
     </main>
   );
