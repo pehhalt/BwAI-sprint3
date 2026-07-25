@@ -73,3 +73,23 @@ export async function updateSectionText(
   revalidatePath(`/projects/${projectId}/sections/${sectionId}`);
   return { success: true };
 }
+
+export async function deleteSection(
+  projectId: string,
+  sectionId: string
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { error } = await supabase.from("sections").delete().eq("id", sectionId);
+
+  if (error) {
+    return { error: "Could not delete section." };
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  return { success: true };
+}

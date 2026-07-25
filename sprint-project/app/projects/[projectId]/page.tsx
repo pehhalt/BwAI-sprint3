@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SectionForm } from "@/components/SectionForm";
+import { DeleteSectionButton } from "@/components/DeleteSectionButton";
 import type { Project, Section } from "@/lib/types";
 
 export default async function ProjectPage({
@@ -47,13 +48,17 @@ export default async function ProjectPage({
 
       <ul className="mb-8 flex flex-col gap-2">
         {sections.map((section) => (
-          <li key={section.id}>
+          <li
+            key={section.id}
+            className="flex items-center gap-3 rounded border border-gray-200 p-3 hover:border-gray-400"
+          >
             <Link
               href={`/projects/${projectId}/sections/${section.id}`}
-              className="block rounded border border-gray-200 p-3 hover:border-gray-400"
+              className="block flex-1"
             >
               {section.title}
             </Link>
+            <DeleteSectionButton projectId={projectId} sectionId={section.id} />
           </li>
         ))}
       </ul>
