@@ -6,6 +6,10 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
+  // rewrite.spec.ts and cross-user.spec.ts both sign in with the same
+  // shared E2E_TEST_EMAIL account; running spec files in parallel workers
+  // races them against each other. Force single-worker execution locally.
+  workers: 1,
   retries: 0,
   reporter: [["list"]],
   use: {
