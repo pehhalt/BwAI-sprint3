@@ -287,3 +287,70 @@ item, and moved "Medium: Playwright coverage for the AI happy path and
 signed-out lockout" out of the stretch-goal sentence into the main
 targeted list, since `e2e/auth.spec.ts` and `e2e/rewrite.spec.ts` already
 implement it and it was never actually claimed as done.
+
+## Optional task: Vercel deployment (Medium tier)
+
+Built on a dedicated `vercel-deployment` branch/worktree (kept alive
+after merge per the user's "keep the worktree" instruction), following
+the same discipline as every other phase: implement, verify, security
+scan, PR, then merge only on explicit confirmation.
+
+**Two real deploy-blocking bugs found and fixed**, both root-caused by
+reading Next.js's own bundled docs rather than guessing against a live
+deploy (each failed attempt costs a real build):
+
+1. **Edge runtime couldn't bundle `@supabase/ssr`.** First deploy failed
+   with `The Edge Function "middleware" is referencing unsupported
+   modules: @/lib/supabase/middleware`. Root cause: the deprecated
+   `middleware.ts` file convention defaults to the restrictive Edge
+   runtime, while Next.js 16's replacement convention, `proxy.ts`,
+   defaults to the Node.js runtime. Fixed by renaming `middleware.ts` →
+   `proxy.ts` (function renamed `middleware` → `proxy`, matcher config
+   unchanged) — the helper module `lib/supabase/middleware.ts` itself was
+   untouched, only the Next.js file-convention entry point moved.
+2. **Production alias domain 404s despite a successful build.** After
+   the first successful deploy, the vanity `*.vercel.app` production
+   alias returned a genuine `X-Vercel-Error: NOT_FOUND`, while the raw
+   per-deployment URL correctly redirected to Vercel's own SSO gate
+   (expected default behavior for a raw deployment URL, not a bug —
+   confirmed distinct from the alias issue). Ruled out propagation lag
+   with a background polling loop before concluding it was a real
+   config bug. Root cause via `vercel project inspect`: **Framework
+   Preset: "Other"**, because the project was created with `vercel
+   project add` (no auto-detection) rather than an auto-detecting flow.
+   Fixed two ways: (a) added `vercel.json` with `{"framework": "nextjs"}`
+   so the setting is pinned in version control and survives a from-scratch
+   project recreation, and (b) ran `vercel project update script-rewriter
+   --framework nextjs` to also correct the dashboard setting itself as
+   defense-in-depth, since `vercel.json` alone left the dashboard's own
+   Framework Preset field still reading "Other" even though it no longer
+   affected routing.
+
+**Also added**: production-only security headers (`Content-Security-Policy`,
+`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`) via
+`next.config.ts`'s `headers()`, gated on `NODE_ENV === "production"`
+after the ungated version broke local dev (`eval()` needed by React
+DevTools in dev mode, disallowed by the CSP, never needed in production
+— self-caught via console warnings during `npm run test:e2e`, not
+user-reported).
+
+**Vercel security scanner run against the live deployment** turned up:
+no Critical findings; one High (`vercel.json` existed only on local
+disk, not yet committed — fixed by committing it along with the rest of
+this phase's changes); one Medium already covered above (dashboard
+Framework Preset); one Medium noted informational-only (public Supabase
+env vars marked "Sensitive" in Vercel — unusual but not a security
+problem, just means they can't be read back once set); two Low items
+informational-only (an unused `NEXT_PUBLIC_APP_URL` env var; env-var
+scoping, which was already correct). Also verified clean: security
+headers present live via direct fetch, no secret in any of the 8
+deployed static JS chunks (grepped for the exact `OPENROUTER_API_KEY`
+value plus generic secret patterns), no secret ever committed anywhere
+in git history across the whole repo including `mid-sprint-project/`.
+
+Opened [PR #5](https://github.com/pehhalt/BwAI-sprint3/pull/5), merged
+after explicit user confirmation. `README.md`'s Deployment section and
+`CLAUDE.md`'s stack list updated to record the live URL
+(`https://script-rewriter-rho.vercel.app`) and both bugs, since this is
+exactly the kind of gotcha worth knowing if the project is ever
+recreated from scratch.
