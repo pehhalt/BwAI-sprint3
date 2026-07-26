@@ -6,9 +6,11 @@ import { deleteSection } from "@/app/actions/sections";
 export function DeleteSectionButton({
   projectId,
   sectionId,
+  sectionTitle,
 }: {
   projectId: string;
   sectionId: string;
+  sectionTitle: string;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | undefined>();
@@ -18,10 +20,11 @@ export function DeleteSectionButton({
       <button
         type="button"
         disabled={pending}
+        aria-label={`Delete ${sectionTitle}`}
         onClick={() => {
           if (
             !window.confirm(
-              "Delete this section? This also deletes its rewrite versions."
+              `Delete "${sectionTitle}"? This also deletes its rewrite versions.`
             )
           ) {
             return;

@@ -16,7 +16,10 @@ export function ProjectForm() {
   );
 
   return (
-    <form action={formAction} className="flex max-w-lg flex-col gap-3">
+    <form
+      action={formAction}
+      className="flex max-w-lg flex-col gap-3 rounded-lg border border-gray-400 p-4"
+    >
       <label htmlFor="title" className="text-sm text-gray-600">
         Title
       </label>

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { projectInputSchema } from "@/lib/validation";
+import { projectInputSchema, uuidSchema } from "@/lib/validation";
 
 type ActionResult = { error?: string; success?: boolean };
 
@@ -78,7 +78,16 @@ export async function deleteProject(projectId: string): Promise<ActionResult> {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { error } = await supabase.from("projects").delete().eq("id", projectId);
+  const parsedId = uuidSchema.safeParse(projectId);
+  if (!parsedId.success) {
+    return { error: "Invalid request." };
+  }
+
+  const { error } = await supabase
+    .from("projects")
+    .delete()
+    .eq("id", parsedId.data)
+    .eq("user_id", user.id);
 
   if (error) {
     return { error: "Could not delete project." };

@@ -72,7 +72,7 @@ export default async function ProjectPage({
                 {sections.map((section, i) => (
                   <tr
                     key={section.id}
-                    className={i % 2 === 0 ? "bg-white" : "bg-gray-100"}
+                    className={`[&:last-child>td]:border-b-0 ${i % 2 === 0 ? "bg-white" : "bg-gray-100"}`}
                   >
                     <td className="w-full border-b border-gray-200 px-4 py-2">
                       <Link
@@ -97,6 +97,7 @@ export default async function ProjectPage({
                       <DeleteSectionButton
                         projectId={projectId}
                         sectionId={section.id}
+                        sectionTitle={section.title}
                       />
                     </td>
                   </tr>

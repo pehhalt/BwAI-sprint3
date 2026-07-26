@@ -16,8 +16,10 @@ export function ProjectRow({
   const [error, setError] = useState<string | undefined>();
 
   return (
-    <tr className={index % 2 === 0 ? "bg-white" : "bg-gray-100"}>
-      <td className="border-b border-gray-200 px-4 py-2">
+    <tr
+      className={`[&:last-child>td]:border-b-0 ${index % 2 === 0 ? "bg-white" : "bg-gray-100"}`}
+    >
+      <td className="w-full border-b border-gray-200 px-4 py-2">
         <Link href={`/projects/${project.id}`} className="font-medium">
           {project.title}
         </Link>
@@ -27,11 +29,12 @@ export function ProjectRow({
           <span className="line-clamp-2">{project.target_audience}</span>
         )}
       </td>
-      <td className="border-b border-gray-200 px-4 py-2 text-right">
+      <td className="whitespace-nowrap border-b border-gray-200 px-4 py-2 text-right">
         <div className="flex items-center justify-end gap-3">
           <button
             type="button"
             disabled={pending}
+            aria-label={`Delete ${project.title}`}
             onClick={() => {
               if (
                 !window.confirm(

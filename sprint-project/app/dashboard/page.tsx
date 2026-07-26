@@ -42,13 +42,13 @@ export default async function DashboardPage() {
           <table className="w-full border-collapse text-left">
             <thead>
               <tr>
-                <th className="border-b border-gray-200 p-4 text-sm font-medium text-gray-700">
+                <th className="border-b border-gray-200 px-4 py-2 text-sm font-medium text-gray-700">
                   Title
                 </th>
-                <th className="border-b border-gray-200 p-4 text-sm font-medium text-gray-700">
+                <th className="border-b border-gray-200 px-4 py-2 text-sm font-medium text-gray-700">
                   Target audience
                 </th>
-                <th className="border-b border-gray-200 p-4"></th>
+                <th className="border-b border-gray-200 px-4 py-2"></th>
               </tr>
             </thead>
             <tbody>

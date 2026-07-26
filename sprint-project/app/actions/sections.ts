@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { sectionInputSchema } from "@/lib/validation";
+import { sectionInputSchema, uuidSchema } from "@/lib/validation";
 
 type ActionResult = { error?: string; success?: boolean };
 
@@ -84,7 +84,17 @@ export async function deleteSection(
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { error } = await supabase.from("sections").delete().eq("id", sectionId);
+  const parsedProjectId = uuidSchema.safeParse(projectId);
+  const parsedSectionId = uuidSchema.safeParse(sectionId);
+  if (!parsedProjectId.success || !parsedSectionId.success) {
+    return { error: "Invalid request." };
+  }
+
+  const { error } = await supabase
+    .from("sections")
+    .delete()
+    .eq("id", parsedSectionId.data)
+    .eq("user_id", user.id);
 
   if (error) {
     return { error: "Could not delete section." };

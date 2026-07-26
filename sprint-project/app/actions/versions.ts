@@ -90,5 +90,7 @@ export async function approveVersion(
   }
 
   revalidatePath(`/projects/${projectId}/sections/${sectionId}`);
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/preview`);
   return { success: true };
 }
