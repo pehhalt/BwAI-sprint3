@@ -47,7 +47,7 @@ Source text is pasted or typed as Markdown/plain text; there is no PDF upload or
 - Tailwind CSS
 - Supabase Auth, Postgres, and RLS
 - OpenRouter through the OpenAI-compatible API
-- Vercel deployment (stretch goal — see below)
+- Vercel deployment — see below
 - Playwright CLI for critical end-to-end tests
 
 ## Core user flow
@@ -165,11 +165,17 @@ npm run test:e2e
 
 The critical Playwright scenarios are documented in `docs/TEST_PLAN.md`.
 
-## Deployment (stretch goal)
+## Deployment
 
-Deployment to Vercel is a Medium-tier optional task, not a mandatory requirement — the brief allows verification against the locally running app instead. Build and verify the mandatory scope and at least one optional task locally first; only attempt Vercel deployment if time remains.
+Live production URL: **<https://script-rewriter-rho.vercel.app>**
 
-If deployed: configure the environment variables in the Vercel dashboard and verify in a new incognito window that protected routes redirect to sign-in rather than showing any data.
+Deployed to Vercel with all secrets (`OPENROUTER_API_KEY`, Supabase keys) set only in the Vercel dashboard, never in the repo or a `NEXT_PUBLIC_` variable. Verified in a fresh incognito window: every protected route redirects to `/login`, no data is shown to a signed-out visitor.
+
+`vercel.json` explicitly pins `"framework": "nextjs"` — the project was created via `vercel project add` rather than an auto-detecting flow, which otherwise leaves the framework preset as "Other" and silently breaks the production alias domain's routing (the raw per-deployment URL still resolves, but the vanity `*.vercel.app` production alias 404s) while the build itself still appears to succeed. Worth knowing if this project is ever recreated from scratch.
+
+Production-only security headers (`Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`) are set in `next.config.ts`'s `headers()` function, gated on `NODE_ENV === "production"` so local dev isn't affected (dev mode needs `eval()` for React's debugging features, which the CSP doesn't allow and production never needs).
+
+Note: this app's route-protection file was migrated from the deprecated `middleware.ts` convention to Next.js 16's `proxy.ts` (`Proxy defaults to the Node.js runtime` per Next.js's own changelog) — the old Edge-runtime default couldn't bundle `@supabase/ssr`'s `createServerClient` for Vercel's Edge Function, causing a hard deploy failure. Functionally identical otherwise.
 
 ## Sprint evidence
 
@@ -191,9 +197,8 @@ Before submission, ensure the repository contains:
 - Easy: usage/cost indicator
 - Medium: tuned system-prompt persona
 - Medium: Playwright coverage for the AI happy path and signed-out lockout
+- Medium: Vercel deployment
 - Bonus: cross-user privacy test
-
-Stretch, only if time remains after the above: Vercel deployment.
 
 ## Efficient testing workflow
 
