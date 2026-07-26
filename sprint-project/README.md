@@ -52,7 +52,7 @@ Source text is pasted or typed as Markdown/plain text; there is no PDF upload or
 
 ## Core user flow
 
-1. Sign in.
+1. Sign in (or create an account — sign-in and sign-up are separate pages, `/login` and `/signup`).
 2. Create a project.
 3. Set project-wide rewriting rules.
 4. Add a source section.
@@ -62,6 +62,8 @@ Source text is pasted or typed as Markdown/plain text; there is no PDF upload or
 8. Save and approve a version.
 9. Preview all approved sections.
 10. Print or save the preview as PDF.
+
+Projects and sections can also be deleted (with confirmation); deleting a project deletes its sections and rewrite versions, and deleting a section deletes its rewrite versions, via the database's `on delete cascade` foreign keys.
 
 ## Data model
 
@@ -145,7 +147,7 @@ See `prompts/system-prompt.md`.
 
 ## Security acceptance criteria
 
-- Signed-out visitors are redirected away from every protected route and resource — not only `/dashboard`, but every project, section, and preview URL, and `/api/rewrite`.
+- Signed-out visitors are redirected away from every protected route and resource — not only `/dashboard`, but every project, section, and preview URL. (All model calls happen through server actions, not a dedicated route handler — there is no `/api/rewrite` endpoint to separately protect.)
 - User A cannot list, read, update, or delete User B's projects, sections, or rewrite versions.
 - Every user-data table has RLS enabled.
 - No service-role key appears in client-accessible code or variables.

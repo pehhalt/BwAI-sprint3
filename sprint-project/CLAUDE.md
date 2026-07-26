@@ -60,31 +60,40 @@ Suggested route structure:
 
 ```text
 /login
+/signup
 /dashboard
 /projects/new
 /projects/[projectId]
 /projects/[projectId]/sections/[sectionId]
 /projects/[projectId]/preview
 /projects/[projectId]/settings
-/api/rewrite
 ```
+
+`/login` and `/signup` are separate pages (not a combined form), matching identical width/padding/card structure so navigating between them causes no layout shift.
+
+All model calls happen through server actions (`app/actions/*.ts`), not a dedicated route handler — there is no `/api/rewrite` endpoint.
 
 All routes above `/login` must be covered by a single protection mechanism (e.g. middleware over the route group), not per-page checks — a signed-out visitor must never reach any of them, including by direct URL.
 
 ## Core components
 
-- `ProjectCard`
+- `ProjectRow` (a project table row — dashboard lists projects as a table, not cards)
 - `ProjectForm`
-- `SectionList`
+- `ProjectSettingsForm`
+- `SectionForm`
 - `SourceEditor`
 - `RewriteEditor`
-- `RewriteSettings`
 - `VersionList`
 - `ApprovalButton`
+- `DeleteSectionButton`
 - `DocumentPreview`
 - `ModelBadge`
+- `LoginForm` / `SignUpForm` (separate pages, `/login` and `/signup`)
+- `SignOutButton`
 
 Avoid premature component abstraction. Extract only repeated or conceptually stable pieces.
+
+Project and section lists render as tables (alternating row shading via `bg-white`/`bg-gray-100`), not card grids. Panels/frames (forms, editors, list containers) use a consistent `rounded-lg border border-gray-400 p-4` wrapper. Deleting a project or section requires a `window.confirm()` before calling its server action; both cascade to their child rows via the database's `on delete cascade` foreign keys, not manual application-level deletion.
 
 ## Minimum database model
 

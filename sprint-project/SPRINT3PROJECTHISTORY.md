@@ -172,3 +172,94 @@ and B as a regression check (both remained correct, in German, with
 figure placeholders intact and no editorial preface). Full transcripts
 and the rule-by-rule comparison table are in
 `.superpowers/sdd/task-19-report.md`.
+
+## Task 20: final review, PR, and post-PR UI iteration
+
+Ran the final whole-branch review (Opus) + Supabase/Next.js/Vercel
+security scanners, all scoped to the full diff vs `main`. No Critical
+findings anywhere. Fixed the 4 highest-priority Important findings before
+opening the PR: dark-mode illegibility (unused scaffold CSS removed),
+dead root route (`/` now redirects by auth state instead of showing
+`create-next-app` boilerplate), two silently-swallowed failure paths
+(approve/settings-save now surface errors), and ran `npm run build` for
+the first time on this branch to confirm `OPENROUTER_API_KEY` never
+appears in `.next/static`/`.next/server` — closing a previously
+unperformed mandatory `docs/TEST_PLAN.md` check. Opened
+[PR #4](https://github.com/pehhalt/BwAI-sprint3/pull/4) with both reports
+recorded in the description. One Next.js-scanner "High" and one
+Supabase-scanner "Medium" both re-flag the same intentional design choice
+(RLS-only authorization, no app-level ownership backstop) already
+documented in `CLAUDE.md` and endorsed across four earlier task reviews —
+left as-is, not a defect.
+
+After the PR was open, the user reviewed the running app directly and
+asked for a round of UI/UX polish, executed iteratively (subagent per
+larger change, direct edits for small CSS-only tweaks, per the user's
+explicit "skip full testing/commit" instruction for those):
+
+- **Delete project** (dashboard) and **delete section** (project page),
+  both with a `window.confirm()` guard. Cascading deletion is handled
+  entirely by the existing `on delete cascade` foreign keys — no manual
+  application-level cascade logic.
+- **Wider side-by-side editor layout** on the section page (source/AI
+  rewrite panes close to A4 width) — surfaced and fixed a real CSS bug
+  where `max-w-[1800px]` wasn't being respected due to a `flex` +
+  `mx-auto` interaction suppressing `align-items: stretch`; fixed with an
+  explicit `w-full`.
+- **Dashboard and section lists converted from tiles to tables** with
+  alternating row shading, and a fixed a classic HTML `table-layout: auto`
+  bug where the delete-button column drifted toward the middle as row
+  content varied — fixed by making the title column `w-full` and the
+  action columns `whitespace-nowrap`.
+- **Approval-status tag** added to the sections table (green
+  "Approved" / gray "Not approved"), requiring a new per-project query for
+  approved `rewrite_versions`.
+- Consistent **darker border** (`border-gray-400`, up from the barely
+  visible `border-gray-200`) applied to every panel/frame across the app;
+  settings page widened and bordered to match.
+- **Preview/print spacing**: added `mb-12` after the project title and
+  after each section so consecutive sections in the printed output no
+  longer run directly together.
+- **Back-links added to every nested page** (section, settings, preview →
+  back to project; project → back to dashboard), each paired with
+  `SignOutButton` in the same header row, right-aligned.
+- **Sign-in and sign-up split into separate pages** (`/login`, `/signup`),
+  referencing `mid-sprint-project`'s existing pattern for avoiding layout
+  jump between them: identical container width, padding, and card
+  structure on both pages, just "a bit wider" (30rem vs. their 26rem) and
+  using this project's `border-gray-400` convention instead of a CSS
+  variable.
+- Button color darkened (`bg-blue-600` → `bg-blue-800`) across all 5
+  buttons that used it.
+
+**Two real operational bugs found and fixed along the way**, both in
+`playwright.config.ts`, not application code:
+
+1. `workers: 1` pinned — `rewrite.spec.ts` and `cross-user.spec.ts` share
+   the same `E2E_TEST_EMAIL` account and can race each other under
+   default multi-worker execution (found while verifying the table
+   conversion).
+2. `reuseExistingServer: false` — the local default (`true`) silently
+   reuses whatever is already listening on port 3000, including a
+   manually-run `npm run dev` kept alive for live UI review, without
+   `E2E_TEST_MODE` set. This was caught live: `rewrite.spec.ts` failed
+   because it hit a real running dev server and got real (if odd) model
+   output instead of the deterministic mock. A same-directory second
+   `next dev` is also refused outright by Next.js 16 regardless of port,
+   so a manual dev server must be stopped before running `npm run
+   test:e2e`, not just pointed at a different port.
+
+Documentation updated to match: `CLAUDE.md`'s route and component lists
+(added `/signup`, `ProjectRow`/`DeleteSectionButton`/`ProjectSettingsForm`,
+removed the stale `/api/rewrite` reference — model calls are server
+actions only, there is no such route), `README.md`'s core user flow and
+security-criteria wording (same `/api/rewrite` fix, delete mention added),
+and `docs/TEST_PLAN.md` (moved the "Approval" scenario out of "Playwright
+tests" into "Mandatory manual tests" since it was never actually
+implemented as an automated spec — a pre-existing inaccuracy the original
+whole-branch review had already flagged — and added a "Delete
+project/section" manual-test entry). Screenshot recaptured to reflect the
+current UI. A second whole-branch review + security-scanner pass was run
+covering everything in this section (delete actions are genuinely
+security/data-integrity relevant; `/signup` is a new auth surface) before
+finalizing.

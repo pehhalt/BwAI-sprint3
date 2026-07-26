@@ -31,6 +31,24 @@
 5. Confirm a generic not-found or unauthorized-safe response.
 6. Confirm User B's dashboard does not list User A's project.
 
+### Approval
+
+Manually verified only (not an automated Playwright spec — matches this project's lean testing philosophy of 3 required specs plus targeted unit tests):
+
+1. Create two rewrite versions for a section.
+2. Approve the first.
+3. Approve the second.
+4. Confirm only the second is approved (and the first, if not manually edited, reverts to draft).
+5. Confirm the preview displays the second.
+
+### Delete project / delete section
+
+Manually verified only, same rationale as above:
+
+1. Create a project with at least one section and rewrite version.
+2. Delete the section; confirm it disappears from the list and its rewrite versions are gone.
+3. Delete the project; confirm it disappears from the dashboard and its remaining sections/rewrite versions are gone (cascading via the database's foreign keys, not manual application-level deletion).
+
 ## Playwright tests
 
 ### Signed-out lockout
@@ -50,14 +68,6 @@ For routine CI, intercept or mock the application AI endpoint so tests are deter
 - Confirm it appears and is persisted.
 
 Maintain one separate manual or non-default integration test that calls OpenRouter for real.
-
-### Approval
-
-- Create two rewrite versions.
-- Approve the first.
-- Approve the second.
-- Confirm only the second is approved.
-- Confirm preview displays the second.
 
 ## Security checks
 
