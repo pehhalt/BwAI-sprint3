@@ -23,3 +23,6 @@ export const rewriteInputSchema = z.object({
 export type RewriteInput = z.infer<typeof rewriteInputSchema>;
 
 export const uuidSchema = z.string().uuid();
+
+export const sectionTextSchema = z.string().trim().min(1).max(20000);
+export const rewriteTextSchema = z.string().trim().min(1).max(20000);

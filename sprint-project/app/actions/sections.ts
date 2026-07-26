@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { sectionInputSchema, uuidSchema } from "@/lib/validation";
+import {
+  sectionInputSchema,
+  sectionTextSchema,
+  uuidSchema,
+} from "@/lib/validation";
 
 type ActionResult = { error?: string; success?: boolean };
 
@@ -56,15 +60,16 @@ export async function updateSectionText(
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const trimmed = sourceText.trim();
-  if (!trimmed) {
-    return { error: "Source text cannot be empty." };
+  const parsed = sectionTextSchema.safeParse(sourceText);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid source text." };
   }
 
   const { error } = await supabase
     .from("sections")
-    .update({ source_text: trimmed })
-    .eq("id", sectionId);
+    .update({ source_text: parsed.data })
+    .eq("id", sectionId)
+    .eq("project_id", projectId);
 
   if (error) {
     return { error: "Could not save source text." };

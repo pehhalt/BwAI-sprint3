@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { planApproval } from "@/lib/approval";
+import { rewriteTextSchema } from "@/lib/validation";
 import type { RewriteVersionStatus } from "@/lib/types";
 
 type ActionResult = { error?: string; success?: boolean };
@@ -20,15 +21,16 @@ export async function updateVersionText(
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const trimmed = text.trim();
-  if (!trimmed) {
-    return { error: "Rewrite text cannot be empty." };
+  const parsed = rewriteTextSchema.safeParse(text);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid rewrite text." };
   }
 
   const { data } = await supabase
     .from("rewrite_versions")
     .select("status")
     .eq("id", versionId)
+    .eq("project_id", projectId)
     .single();
 
   const currentStatus =
@@ -38,8 +40,9 @@ export async function updateVersionText(
 
   const { error } = await supabase
     .from("rewrite_versions")
-    .update({ rewritten_text: trimmed, status: nextStatus })
-    .eq("id", versionId);
+    .update({ rewritten_text: parsed.data, status: nextStatus })
+    .eq("id", versionId)
+    .eq("project_id", projectId);
 
   if (error) {
     return { error: "Could not save edits." };
@@ -63,7 +66,8 @@ export async function approveVersion(
   const { data: versions, error: fetchError } = await supabase
     .from("rewrite_versions")
     .select("id, status")
-    .eq("section_id", sectionId);
+    .eq("section_id", sectionId)
+    .eq("project_id", projectId);
 
   if (fetchError || !versions) {
     return { error: "Could not load versions." };
