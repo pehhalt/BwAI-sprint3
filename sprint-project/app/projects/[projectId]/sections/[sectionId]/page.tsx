@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SourceEditor } from "@/components/SourceEditor";
 import { RewriteEditor } from "@/components/RewriteEditor";
 import { VersionList } from "@/components/VersionList";
-import type { RewriteVersion, Section } from "@/lib/types";
+import { SignOutButton } from "@/components/SignOutButton";
+import type { Project, RewriteVersion, Section } from "@/lib/types";
 
 export default async function SectionPage({
   params,
@@ -26,6 +28,13 @@ export default async function SectionPage({
   const section = data as Section | null;
   if (!section) notFound();
 
+  const { data: projectData } = await supabase
+    .from("projects")
+    .select("title")
+    .eq("id", projectId)
+    .single();
+  const project = projectData as Pick<Project, "title"> | null;
+
   const { data: versionsData } = await supabase
     .from("rewrite_versions")
     .select("*")
@@ -36,6 +45,15 @@ export default async function SectionPage({
 
   return (
     <main className="mx-auto w-full max-w-[1800px] p-6">
+      <div className="mb-2 flex items-center justify-between">
+        <Link
+          href={`/projects/${projectId}`}
+          className="text-sm text-gray-600 underline"
+        >
+          ← {project?.title ?? "Back to project"}
+        </Link>
+        <SignOutButton />
+      </div>
       <h1 className="text-2xl font-semibold">{section.title}</h1>
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <SourceEditor projectId={projectId} section={section} />

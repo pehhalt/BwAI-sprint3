@@ -23,7 +23,10 @@ export function ProjectSettingsForm({
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
+    <form
+      action={formAction}
+      className="flex flex-col gap-3 rounded-lg border border-gray-400 p-4"
+    >
       <label htmlFor="title" className="text-sm text-gray-600">
         Title
       </label>
@@ -61,7 +64,7 @@ export function ProjectSettingsForm({
         <button
           type="submit"
           disabled={pending}
-          className="self-start rounded bg-blue-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+          className="self-start rounded bg-blue-800 px-3 py-1.5 text-sm text-white disabled:opacity-50"
         >
           {pending ? "Saving…" : "Save settings"}
         </button>

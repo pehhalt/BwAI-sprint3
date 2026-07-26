@@ -26,7 +26,7 @@ export function SourceEditor({
   return (
     <form
       action={formAction}
-      className="flex flex-col gap-2 rounded-lg border border-gray-200 p-4"
+      className="flex flex-col gap-2 rounded-lg border border-gray-400 p-4"
     >
       <h2 className="font-medium">Source text</h2>
       <textarea

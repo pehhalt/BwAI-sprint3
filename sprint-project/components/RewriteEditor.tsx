@@ -42,7 +42,7 @@ export function RewriteEditor({
   );
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-gray-200 p-4">
+    <div className="flex flex-col gap-4 rounded-lg border border-gray-400 p-4">
       <h2 className="font-medium">AI rewrite</h2>
 
       <form action={generateAction} className="flex flex-col gap-2">
@@ -58,7 +58,7 @@ export function RewriteEditor({
         <button
           type="submit"
           disabled={generatePending}
-          className="self-start rounded bg-blue-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+          className="self-start rounded bg-blue-800 px-3 py-1.5 text-sm text-white disabled:opacity-50"
         >
           {generatePending ? "Generating…" : "Generate rewrite"}
         </button>

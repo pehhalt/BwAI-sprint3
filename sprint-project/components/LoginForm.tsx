@@ -42,7 +42,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="self-start rounded bg-blue-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+        className="self-start rounded bg-blue-800 px-3 py-1.5 text-sm text-white disabled:opacity-50"
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>

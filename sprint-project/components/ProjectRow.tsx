@@ -16,18 +16,18 @@ export function ProjectRow({
   const [error, setError] = useState<string | undefined>();
 
   return (
-    <tr className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-      <td className="border-b border-gray-200 p-4">
+    <tr className={index % 2 === 0 ? "bg-white" : "bg-gray-100"}>
+      <td className="border-b border-gray-200 px-4 py-2">
         <Link href={`/projects/${project.id}`} className="font-medium">
           {project.title}
         </Link>
       </td>
-      <td className="border-b border-gray-200 p-4 text-sm text-gray-500">
+      <td className="border-b border-gray-200 px-4 py-2 text-sm text-gray-500">
         {project.target_audience && (
           <span className="line-clamp-2">{project.target_audience}</span>
         )}
       </td>
-      <td className="border-b border-gray-200 p-4 text-right">
+      <td className="border-b border-gray-200 px-4 py-2 text-right">
         <div className="flex items-center justify-end gap-3">
           <button
             type="button"

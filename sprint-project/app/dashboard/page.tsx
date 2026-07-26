@@ -25,7 +25,7 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/projects/new"
-            className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white"
+            className="rounded bg-blue-800 px-3 py-1.5 text-sm text-white"
           >
             New project
           </Link>
@@ -38,24 +38,26 @@ export default async function DashboardPage() {
           No projects yet. Create your first one.
         </p>
       ) : (
-        <table className="w-full border-collapse text-left">
-          <thead>
-            <tr>
-              <th className="border-b border-gray-200 p-4 text-sm font-medium text-gray-700">
-                Title
-              </th>
-              <th className="border-b border-gray-200 p-4 text-sm font-medium text-gray-700">
-                Target audience
-              </th>
-              <th className="border-b border-gray-200 p-4"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {projects.map((project, i) => (
-              <ProjectRow key={project.id} project={project} index={i} />
-            ))}
-          </tbody>
-        </table>
+        <div className="rounded-lg border border-gray-400 p-4">
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr>
+                <th className="border-b border-gray-200 p-4 text-sm font-medium text-gray-700">
+                  Title
+                </th>
+                <th className="border-b border-gray-200 p-4 text-sm font-medium text-gray-700">
+                  Target audience
+                </th>
+                <th className="border-b border-gray-200 p-4"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {projects.map((project, i) => (
+                <ProjectRow key={project.id} project={project} index={i} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </main>
   );
