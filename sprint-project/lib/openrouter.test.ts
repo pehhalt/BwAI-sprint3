@@ -20,5 +20,6 @@ describe("rewriteSection", () => {
     expect(result.model).toBe(
       process.env.OPENROUTER_MODEL ?? "anthropic/claude-sonnet-4.5"
     );
+    expect(result.usage).toEqual({ totalTokens: 42, cost: 0.0007 });
   });
 });

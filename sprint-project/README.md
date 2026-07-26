@@ -188,10 +188,12 @@ Before submission, ensure the repository contains:
 ## Optional features targeted
 
 - Easy: model display
+- Easy: usage/cost indicator
 - Medium: tuned system-prompt persona
+- Medium: Playwright coverage for the AI happy path and signed-out lockout
 - Bonus: cross-user privacy test
 
-Stretch, only if time remains after the above: Medium Playwright coverage for the AI happy path and signed-out lockout, then Vercel deployment.
+Stretch, only if time remains after the above: Vercel deployment.
 
 ## Efficient testing workflow
 

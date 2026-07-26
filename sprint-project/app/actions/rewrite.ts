@@ -6,7 +6,11 @@ import { createClient } from "@/lib/supabase/server";
 import { rewriteInputSchema } from "@/lib/validation";
 import { rewriteSection } from "@/lib/openrouter";
 
-type ActionResult = { error?: string; success?: boolean };
+type ActionResult = {
+  error?: string;
+  success?: boolean;
+  usage?: { totalTokens: number; cost: number | null };
+};
 
 export async function generateRewrite(
   formData: FormData
@@ -78,5 +82,5 @@ export async function generateRewrite(
   }
 
   revalidatePath(`/projects/${sectionData.project_id}/sections/${sectionData.id}`);
-  return { success: true };
+  return { success: true, usage: result.usage };
 }

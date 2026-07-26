@@ -6,7 +6,11 @@ import { updateVersionText } from "@/app/actions/versions";
 import { ModelBadge } from "@/components/ModelBadge";
 import type { RewriteVersion } from "@/lib/types";
 
-type State = { error?: string; success?: boolean };
+type State = {
+  error?: string;
+  success?: boolean;
+  usage?: { totalTokens: number; cost: number | null };
+};
 const initialState: State = {};
 
 export function RewriteEditor({
@@ -64,6 +68,14 @@ export function RewriteEditor({
         </button>
         {generateState.error && (
           <span className="text-sm text-red-600">{generateState.error}</span>
+        )}
+        {generateState.usage && (
+          <span className="text-xs text-gray-500">
+            {generateState.usage.totalTokens.toLocaleString()} tokens
+            {generateState.usage.cost != null
+              ? ` · ~$${generateState.usage.cost.toFixed(4)}`
+              : ""}
+          </span>
         )}
       </form>
 

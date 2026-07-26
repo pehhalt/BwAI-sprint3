@@ -20,6 +20,7 @@ const MODEL = process.env.OPENROUTER_MODEL ?? "anthropic/claude-sonnet-4.5";
 export type RewriteResult = {
   text: string;
   model: string;
+  usage?: { totalTokens: number; cost: number | null };
 };
 
 export async function rewriteSection(
@@ -29,6 +30,7 @@ export async function rewriteSection(
     return {
       text: `[E2E_TEST_MODE mock rewrite]\n\n${input.sourceText.slice(0, 200)}`,
       model: MODEL,
+      usage: { totalTokens: 42, cost: 0.0007 },
     };
   }
 
@@ -53,6 +55,7 @@ export async function rewriteSection(
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userPrompt },
         ],
+        usage: { include: true },
       }),
       signal: AbortSignal.timeout(60_000),
     }
@@ -67,6 +70,7 @@ export async function rewriteSection(
 
   const data = (await response.json()) as {
     choices?: { message?: { content?: string } }[];
+    usage?: { total_tokens?: number; cost?: number };
   };
 
   const text = data.choices?.[0]?.message?.content?.trim();
@@ -74,5 +78,13 @@ export async function rewriteSection(
     throw new Error("OpenRouter returned an empty response.");
   }
 
-  return { text, model: MODEL };
+  const usage =
+    typeof data.usage?.total_tokens === "number"
+      ? {
+          totalTokens: data.usage.total_tokens,
+          cost: typeof data.usage.cost === "number" ? data.usage.cost : null,
+        }
+      : undefined;
+
+  return { text, model: MODEL, usage };
 }

@@ -263,3 +263,27 @@ current UI. A second whole-branch review + security-scanner pass was run
 covering everything in this section (delete actions are genuinely
 security/data-integrity relevant; `/signup` is a new auth surface) before
 finalizing.
+
+## Optional task: usage/cost indicator (Easy tier)
+
+Added the "Easy: usage or cost indicator" optional task. `lib/openrouter.ts`
+now sends `usage: { include: true }` in the OpenRouter request body and
+parses the returned `usage.total_tokens`/`usage.cost` fields defensively
+(the field is absent on some accounts/models, so `RewriteResult.usage` is
+optional and parsing never throws if missing). `app/actions/rewrite.ts`
+threads `result.usage` through the server action's return value, and
+`RewriteEditor`'s generate form renders it (`"N tokens · ~$0.00NN"`) right
+next to the "Generate rewrite" button when present. TDD: `lib/openrouter.test.ts`
+updated first to assert the `E2E_TEST_MODE` mock's fixed `{ totalTokens: 42,
+cost: 0.0007 }`, confirmed red, then implemented, confirmed green.
+
+**Scope is deliberately ephemeral** — this is client-side `useActionState`
+display only, not persisted to `rewrite_versions` (no migration, no new
+column). On page reload the indicator simply isn't shown for past
+generations; that's the intentional Easy-tier scope, not a bug.
+
+`README.md`'s "Optional features targeted" list also updated: added this
+item, and moved "Medium: Playwright coverage for the AI happy path and
+signed-out lockout" out of the stretch-goal sentence into the main
+targeted list, since `e2e/auth.spec.ts` and `e2e/rewrite.spec.ts` already
+implement it and it was never actually claimed as done.
