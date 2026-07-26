@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ProjectCard } from "@/components/ProjectCard";
+import { ProjectRow } from "@/components/ProjectRow";
 import { SignOutButton } from "@/components/SignOutButton";
 import type { Project } from "@/lib/types";
 
@@ -38,11 +38,24 @@ export default async function DashboardPage() {
           No projects yet. Create your first one.
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
+        <table className="w-full border-collapse text-left">
+          <thead>
+            <tr>
+              <th className="border-b border-gray-200 p-4 text-sm font-medium text-gray-700">
+                Title
+              </th>
+              <th className="border-b border-gray-200 p-4 text-sm font-medium text-gray-700">
+                Target audience
+              </th>
+              <th className="border-b border-gray-200 p-4"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {projects.map((project, i) => (
+              <ProjectRow key={project.id} project={project} index={i} />
+            ))}
+          </tbody>
+        </table>
       )}
     </main>
   );
