@@ -30,7 +30,7 @@ Do not implement unless explicitly requested after the MVP is complete:
 - OpenRouter for all LLM calls
 - OpenAI-compatible client or direct server-side fetch
 - Tailwind CSS
-- Vercel (stretch goal only — see `README.md`)
+- Vercel — deployed, see `README.md` for the live URL
 - Playwright CLI for critical end-to-end tests (never Playwright MCP for routine work — see `AGENTS.md`)
 
 ## AI model calls
